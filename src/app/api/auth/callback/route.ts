@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 
 /**
  * Linux.do OAuth 回调处理
@@ -50,11 +51,14 @@ export async function GET(request: NextRequest) {
 
     const linuxdoUser = await userInfoResponse.json();
 
-    // 3. 查询或创建本地用户
-    const supabase = await createClient();
+    // 3. 查询或创建本地用户（使用 service role）
+    const serviceSupabase = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
     // 先查询是否已存在
-    const { data: existingProfile } = await supabase
+    const { data: existingProfile } = await serviceSupabase
       .from('profiles')
       .select('*')
       .eq('linuxdo_id', linuxdoUser.id)
@@ -65,7 +69,7 @@ export async function GET(request: NextRequest) {
     if (existingProfile) {
       // 用户已存在，更新信息
       userId = existingProfile.id;
-      await supabase
+      await serviceSupabase
         .from('profiles')
         .update({
           linuxdo_username: linuxdoUser.username,
@@ -80,7 +84,7 @@ export async function GET(request: NextRequest) {
       // 生成唯一的 username（使用 linuxdo_username + 时间戳）
       const username = `${linuxdoUser.username}_${Date.now()}`;
 
-      const { data: newProfile, error: createError } = await supabase
+      const { data: newProfile, error: createError } = await serviceSupabase
         .from('profiles')
         .insert({
           username,

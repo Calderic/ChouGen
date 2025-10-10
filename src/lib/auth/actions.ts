@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { redirect } from 'next/navigation';
 
 /**
@@ -27,15 +28,19 @@ export async function signUp(formData: {
     return { error: '注册失败' };
   }
 
-  // 2. 创建 profiles 表记录
-  const { error: dbError } = await supabase.from('profiles').insert({
+  // 2. 使用 service role 创建 profiles 表记录
+  // 原因：注册时用户 session 还未完全建立，普通客户端会被 RLS 拦截
+  const serviceSupabase = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { error: dbError } = await serviceSupabase.from('profiles').insert({
     id: authData.user.id,
     username: formData.username,
   });
 
   if (dbError) {
-    // 如果创建用户记录失败，需要删除 Auth 用户
-    // 注意：这需要 Service Role Key
     return { error: '创建用户记录失败: ' + dbError.message };
   }
 
