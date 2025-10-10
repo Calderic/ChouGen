@@ -71,14 +71,15 @@ ChouGen/
 npm install
 ```
 
-### 2. 配置环境变量
+### 2. 配置 Supabase 和环境变量
 
-复制 `.env.local.example` 为 `.env.local` 并填写：
+**详细配置步骤请查看**: [docs/quick-setup.md](./docs/quick-setup.md)
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-```
+简要步骤：
+1. 创建 Supabase 项目
+2. 运行数据库迁移 (`supabase/migrations/20250110000000_initial_schema.sql`)
+3. 配置 `.env.local` 文件
+4. （可选）申请 Linux.do OAuth 应用
 
 ### 3. 启动开发服务器
 
@@ -107,10 +108,12 @@ npm run dev
 - [x] 配置 Supabase 客户端
 - [x] 创建基础目录结构
 
-### Phase 2: 认证系统 (待开始)
-- [ ] 实现邮箱登录/注册
-- [ ] 实现第三方登录
-- [ ] 用户资料编辑
+### Phase 2: 认证系统 ✅
+- [x] 实现邮箱登录/注册
+- [x] 实现 Linux.do 一键登录
+- [x] 数据库表设计和迁移
+- [x] 登录/注册 UI 组件
+- [ ] 用户资料编辑（待开发）
 
 ### Phase 3: 核心功能 (待开始)
 - [ ] 长按抽烟按钮
