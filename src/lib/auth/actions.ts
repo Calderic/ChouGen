@@ -27,10 +27,9 @@ export async function signUp(formData: {
     return { error: '注册失败' };
   }
 
-  // 2. 创建 users 表记录
-  const { error: dbError } = await supabase.from('users').insert({
+  // 2. 创建 profiles 表记录
+  const { error: dbError } = await supabase.from('profiles').insert({
     id: authData.user.id,
-    email: formData.email,
     username: formData.username,
   });
 
@@ -85,11 +84,11 @@ export async function getUser() {
   }
 
   // 获取完整的用户信息
-  const { data: userData } = await supabase
-    .from('users')
+  const { data: profile } = await supabase
+    .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single();
 
-  return userData;
+  return profile;
 }

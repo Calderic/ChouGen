@@ -54,19 +54,19 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
 
     // 先查询是否已存在
-    const { data: existingUser } = await supabase
-      .from('users')
+    const { data: existingProfile } = await supabase
+      .from('profiles')
       .select('*')
       .eq('linuxdo_id', linuxdoUser.id)
       .single();
 
     let userId: string;
 
-    if (existingUser) {
+    if (existingProfile) {
       // 用户已存在，更新信息
-      userId = existingUser.id;
+      userId = existingProfile.id;
       await supabase
-        .from('users')
+        .from('profiles')
         .update({
           linuxdo_username: linuxdoUser.username,
           linuxdo_trust_level: linuxdoUser.trust_level,
@@ -77,11 +77,11 @@ export async function GET(request: NextRequest) {
         .eq('id', userId);
     } else {
       // 创建新用户
-      // 生成唯一的 username（使用 linuxdo_username）
+      // 生成唯一的 username（使用 linuxdo_username + 时间戳）
       const username = `${linuxdoUser.username}_${Date.now()}`;
 
-      const { data: newUser, error: createError } = await supabase
-        .from('users')
+      const { data: newProfile, error: createError } = await supabase
+        .from('profiles')
         .insert({
           username,
           linuxdo_id: linuxdoUser.id,
@@ -94,11 +94,11 @@ export async function GET(request: NextRequest) {
         .select()
         .single();
 
-      if (createError || !newUser) {
-        throw new Error('Failed to create user');
+      if (createError || !newProfile) {
+        throw new Error('Failed to create profile');
       }
 
-      userId = newUser.id;
+      userId = newProfile.id;
     }
 
     // 4. 创建 Supabase Auth session
