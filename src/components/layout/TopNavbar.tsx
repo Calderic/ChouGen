@@ -1,9 +1,14 @@
 'use client';
 
-import { AppBar, Toolbar, Box, Avatar, IconButton, Typography } from '@mui/material';
-import { BarChart as BarChartIcon } from '@mui/icons-material';
+import { AppBar, Toolbar, Box, Avatar, IconButton, Typography, Button, Stack } from '@mui/material';
+import {
+  Home as HomeIcon,
+  Inventory as InventoryIcon,
+  BarChart as BarChartIcon,
+  EmojiEvents as TrophyIcon,
+} from '@mui/icons-material';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface TopNavbarProps {
   user?: {
@@ -12,8 +17,16 @@ interface TopNavbarProps {
   } | null;
 }
 
+const navItems = [
+  { label: '首页', value: '/', icon: <HomeIcon /> },
+  { label: '排行榜', value: '/leaderboard', icon: <TrophyIcon /> },
+  { label: '口粮仓库', value: '/inventory', icon: <InventoryIcon /> },
+  { label: '统计分析', value: '/statistics', icon: <BarChartIcon /> },
+];
+
 export default function TopNavbar({ user }: TopNavbarProps) {
   const router = useRouter();
+  const pathname = usePathname();
 
   return (
     <AppBar
@@ -25,8 +38,54 @@ export default function TopNavbar({ user }: TopNavbarProps) {
         borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
       }}
     >
-      <Toolbar sx={{ justifyContent: 'space-between', minHeight: 68 }}>
-        {/* 左侧：用户头像 */}
+      <Toolbar sx={{ justifyContent: 'space-between', minHeight: 68, gap: 3 }}>
+        {/* 左侧：Logo */}
+        <Link href="/" style={{ textDecoration: 'none' }}>
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 700,
+              color: 'text.primary',
+              letterSpacing: 0.5,
+            }}
+          >
+            抽根
+          </Typography>
+        </Link>
+
+        {/* 中间：PC端导航菜单 */}
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{
+            display: { xs: 'none', md: 'flex' },
+            flexGrow: 1,
+            justifyContent: 'center',
+          }}
+        >
+          {navItems.map((item) => (
+            <Button
+              key={item.value}
+              startIcon={item.icon}
+              onClick={() => router.push(item.value)}
+              sx={{
+                color: pathname === item.value ? 'primary.main' : 'text.secondary',
+                bgcolor: pathname === item.value ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
+                fontWeight: pathname === item.value ? 600 : 500,
+                px: 2.5,
+                py: 1,
+                borderRadius: 2,
+                '&:hover': {
+                  bgcolor: pathname === item.value ? 'rgba(37, 99, 235, 0.12)' : 'rgba(0, 0, 0, 0.04)',
+                },
+              }}
+            >
+              {item.label}
+            </Button>
+          ))}
+        </Stack>
+
+        {/* 右侧：用户头像 */}
         <IconButton
           onClick={() => router.push('/profile')}
           sx={{
@@ -45,35 +104,6 @@ export default function TopNavbar({ user }: TopNavbarProps) {
           >
             {user?.username?.[0]?.toUpperCase() || 'U'}
           </Avatar>
-        </IconButton>
-
-        {/* 中间：Logo */}
-        <Link href="/" style={{ textDecoration: 'none' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 700,
-                color: 'text.primary',
-                letterSpacing: 0.5,
-              }}
-            >
-              抽根
-            </Typography>
-          </Box>
-        </Link>
-
-        {/* 右侧：统计图标 */}
-        <IconButton
-          onClick={() => router.push('/statistics')}
-          sx={{
-            bgcolor: 'rgba(0, 0, 0, 0.04)',
-            '&:hover': {
-              bgcolor: 'rgba(0, 0, 0, 0.08)',
-            },
-          }}
-        >
-          <BarChartIcon />
         </IconButton>
       </Toolbar>
     </AppBar>

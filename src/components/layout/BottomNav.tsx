@@ -13,9 +13,9 @@ import { useState, useEffect } from 'react';
 
 const navItems = [
   { label: '首页', value: '/', icon: <HomeIcon /> },
+  { label: '排行榜', value: '/leaderboard', icon: <TrophyIcon /> },
   { label: '口粮', value: '/inventory', icon: <InventoryIcon /> },
   { label: '统计', value: '/statistics', icon: <BarChartIcon /> },
-  { label: '排行', value: '/leaderboard', icon: <TrophyIcon /> },
   { label: '我的', value: '/profile', icon: <PersonIcon /> },
 ];
 
