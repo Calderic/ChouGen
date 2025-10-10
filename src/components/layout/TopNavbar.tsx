@@ -1,6 +1,6 @@
 'use client';
 
-import { AppBar, Toolbar, Box, Avatar, IconButton, Typography, Button, Stack } from '@mui/material';
+import { AppBar, Toolbar, Avatar, IconButton, Typography, Button, Stack } from '@mui/material';
 import {
   Home as HomeIcon,
   Inventory as InventoryIcon,
