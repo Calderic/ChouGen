@@ -14,6 +14,7 @@ import { Delete as DeleteIcon, SmokingRooms as SmokingIcon, LocalAtm as MoneyIco
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { useRouter } from 'next/navigation';
 
 interface Pack {
   id: string;
@@ -34,6 +35,12 @@ interface ActivePacksListProps {
 const PackCard = motion(Card);
 
 export default function ActivePacksList({ data, onDelete }: ActivePacksListProps) {
+  const router = useRouter();
+
+  const handlePackClick = (packId: string) => {
+    router.push(`/inventory/${packId}`);
+  };
+
   if (data.length === 0) {
     return (
       <Box
@@ -69,6 +76,7 @@ export default function ActivePacksList({ data, onDelete }: ActivePacksListProps
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ delay: index * 0.05 }}
+              onClick={() => handlePackClick(pack.id)}
               sx={{
                 bgcolor: 'rgba(255, 255, 255, 0.7)',
                 backdropFilter: 'blur(20px)',
@@ -77,6 +85,12 @@ export default function ActivePacksList({ data, onDelete }: ActivePacksListProps
                 borderRadius: 3,
                 position: 'relative',
                 overflow: 'visible',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+                },
               }}
             >
               <CardContent sx={{ pb: 2.5, pt: 2.5 }}>
@@ -95,7 +109,10 @@ export default function ActivePacksList({ data, onDelete }: ActivePacksListProps
                   {onDelete && (
                     <IconButton
                       size="small"
-                      onClick={() => onDelete(pack.id)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // 阻止冒泡到卡片点击事件
+                        onDelete(pack.id);
+                      }}
                       sx={{
                         color: 'error.main',
                         bgcolor: 'rgba(255, 255, 255, 0.5)',

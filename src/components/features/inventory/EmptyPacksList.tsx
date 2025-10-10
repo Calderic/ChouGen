@@ -5,6 +5,7 @@ import { Delete as DeleteIcon, CheckCircle as CompleteIcon, LocalAtm as MoneyIco
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import { useRouter } from 'next/navigation';
 
 interface Pack {
   id: string;
@@ -25,6 +26,12 @@ interface EmptyPacksListProps {
 const PackCard = motion(Card);
 
 export default function EmptyPacksList({ data, onDelete }: EmptyPacksListProps) {
+  const router = useRouter();
+
+  const handlePackClick = (packId: string) => {
+    router.push(`/inventory/${packId}`);
+  };
+
   if (data.length === 0) {
     return (
       <Box
@@ -59,6 +66,7 @@ export default function EmptyPacksList({ data, onDelete }: EmptyPacksListProps) 
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ delay: index * 0.05 }}
+              onClick={() => handlePackClick(pack.id)}
               sx={{
                 bgcolor: 'rgba(255, 255, 255, 0.5)',
                 backdropFilter: 'blur(10px)',
@@ -68,6 +76,13 @@ export default function EmptyPacksList({ data, onDelete }: EmptyPacksListProps) 
                 position: 'relative',
                 overflow: 'visible',
                 opacity: 0.8,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  opacity: 1,
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)',
+                },
               }}
             >
               <CardContent sx={{ pb: 2, pt: 2 }}>
@@ -127,7 +142,10 @@ export default function EmptyPacksList({ data, onDelete }: EmptyPacksListProps) 
                   {onDelete && (
                     <IconButton
                       size="small"
-                      onClick={() => onDelete(pack.id)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // 阻止冒泡到卡片点击事件
+                        onDelete(pack.id);
+                      }}
                       sx={{
                         color: 'error.main',
                         bgcolor: 'rgba(255, 255, 255, 0.5)',
