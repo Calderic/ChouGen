@@ -1,70 +1,67 @@
 'use client';
 
-import { Container, Box, Typography, Fab, Tabs, Tab } from '@mui/material';
+import { Container, Box, Typography, Fab, Tabs, Tab, CircularProgress, Alert } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import TopNavbar from '@/components/layout/TopNavbar';
 import BottomNav from '@/components/layout/BottomNav';
 import ActivePacksList from '@/components/features/inventory/ActivePacksList';
 import EmptyPacksList from '@/components/features/inventory/EmptyPacksList';
 import AddPackDialog from '@/components/features/inventory/AddPackDialog';
-
-// 模拟数据
-const mockUser = {
-  username: '测试用户',
-  avatar_url: null,
-};
-
-const mockActivePacks = [
-  {
-    id: '1',
-    name: '中华（软）',
-    brand: '中华',
-    remaining_count: 12,
-    total_count: 20,
-    price: 65.0,
-    purchase_date: '2025-01-10',
-    photo_url: null,
-  },
-  {
-    id: '2',
-    name: '玉溪',
-    brand: '玉溪',
-    remaining_count: 18,
-    total_count: 20,
-    price: 25.0,
-    purchase_date: '2025-01-11',
-    photo_url: null,
-  },
-];
-
-const mockEmptyPacks = [
-  {
-    id: '3',
-    name: '云烟（软珍品）',
-    brand: '云烟',
-    remaining_count: 0,
-    total_count: 20,
-    price: 20.0,
-    purchase_date: '2025-01-05',
-    photo_url: null,
-  },
-  {
-    id: '4',
-    name: '利群（软红）',
-    brand: '利群',
-    remaining_count: 0,
-    total_count: 20,
-    price: 15.0,
-    purchase_date: '2025-01-03',
-    photo_url: null,
-  },
-];
+import { getCurrentUserProfile } from '@/lib/services/profile';
+import {
+  getActivePacks,
+  getEmptyPacks,
+  createPack,
+  deletePack,
+  getRecentBrands,
+} from '@/lib/services/cigarette-packs';
+import type { Profile, CigarettePack } from '@/types/database';
 
 export default function InventoryPage() {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [activePacks, setActivePacks] = useState<CigarettePack[]>([]);
+  const [emptyPacks, setEmptyPacks] = useState<CigarettePack[]>([]);
+  const [recentPacks, setRecentPacks] = useState<CigarettePack[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState(0);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+
+  // 加载数据
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // 并行加载所有数据
+      const [profileData, activePacksData, emptyPacksData] = await Promise.all([
+        getCurrentUserProfile(),
+        getActivePacks(),
+        getEmptyPacks(),
+      ]);
+
+      if (!profileData) {
+        setError('无法加载用户资料');
+      } else {
+        setProfile(profileData);
+        setActivePacks(activePacksData);
+        setEmptyPacks(emptyPacksData);
+        // 使用已抽完的包作为最近使用的包（用于快速添加）
+        setRecentPacks(emptyPacksData.slice(0, 5));
+      }
+    } catch (err) {
+      setError('加载数据失败');
+      console.error('加载数据失败:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTab(newValue);
@@ -78,26 +75,93 @@ export default function InventoryPage() {
     setAddDialogOpen(false);
   };
 
-  const handleAddPack = (packData: {
+  const handleAddPack = async (packData: {
     name: string;
     brand: string;
     total_count: number;
     price: number;
     purchase_date: string;
   }) => {
-    console.log('添加香烟:', packData);
-    // TODO: 实现添加香烟功能
-    setAddDialogOpen(false);
+    const result = await createPack(packData);
+
+    if (result.success) {
+      // 刷新数据
+      const activePacksData = await getActivePacks();
+      setActivePacks(activePacksData);
+      setAddDialogOpen(false);
+    } else {
+      alert(result.error || '添加失败');
+    }
   };
 
-  const handleDeletePack = (packId: string) => {
-    console.log('删除香烟:', packId);
-    // TODO: 实现删除香烟功能
+  const handleDeletePack = async (packId: string) => {
+    if (!confirm('确定要删除这个香烟包吗？')) {
+      return;
+    }
+
+    const result = await deletePack(packId);
+
+    if (result.success) {
+      // 刷新数据
+      const [activePacksData, emptyPacksData] = await Promise.all([
+        getActivePacks(),
+        getEmptyPacks(),
+      ]);
+      setActivePacks(activePacksData);
+      setEmptyPacks(emptyPacksData);
+    } else {
+      alert(result.error || '删除失败');
+    }
   };
+
+  // 加载中状态
+  if (loading) {
+    return (
+      <>
+        <TopNavbar user={null} />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+          }}
+        >
+          <CircularProgress />
+        </Box>
+        <BottomNav />
+      </>
+    );
+  }
+
+  // 错误状态
+  if (error || !profile) {
+    return (
+      <>
+        <TopNavbar user={null} />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+            p: 3,
+          }}
+        >
+          <Alert severity="error" sx={{ maxWidth: 600 }}>
+            {error || '加载失败'}
+          </Alert>
+        </Box>
+        <BottomNav />
+      </>
+    );
+  }
 
   return (
     <>
-      <TopNavbar user={mockUser} />
+      <TopNavbar user={profile} />
 
       <Box
         component={motion.main}
@@ -141,7 +205,7 @@ export default function InventoryPage() {
             }}
           >
             <Tab
-              label={`当前口粮 (${mockActivePacks.length})`}
+              label={`当前口粮 (${activePacks.length})`}
               sx={{
                 fontWeight: 600,
                 minWidth: 120,
@@ -151,7 +215,7 @@ export default function InventoryPage() {
               }}
             />
             <Tab
-              label={`已抽完 (${mockEmptyPacks.length})`}
+              label={`已抽完 (${emptyPacks.length})`}
               sx={{
                 fontWeight: 600,
                 minWidth: 120,
@@ -165,9 +229,9 @@ export default function InventoryPage() {
           {/* 内容区 */}
           <Box sx={{ minHeight: 400 }}>
             {tab === 0 ? (
-              <ActivePacksList data={mockActivePacks} onDelete={handleDeletePack} />
+              <ActivePacksList data={activePacks} onDelete={handleDeletePack} />
             ) : (
-              <EmptyPacksList data={mockEmptyPacks} onDelete={handleDeletePack} />
+              <EmptyPacksList data={emptyPacks} onDelete={handleDeletePack} />
             )}
           </Box>
         </Container>
@@ -194,7 +258,7 @@ export default function InventoryPage() {
         open={addDialogOpen}
         onClose={handleAddDialogClose}
         onSubmit={handleAddPack}
-        recentPacks={mockEmptyPacks}
+        recentPacks={recentPacks}
       />
     </>
   );
