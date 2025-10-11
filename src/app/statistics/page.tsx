@@ -1,84 +1,156 @@
 'use client';
 
-import { Container, Box, Stack, Tabs, Tab } from '@mui/material';
-import { useState } from 'react';
+import { Container, Box, Stack, Tabs, Tab, CircularProgress, Alert } from '@mui/material';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { format } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
 import TopNavbar from '@/components/layout/TopNavbar';
 import BottomNav from '@/components/layout/BottomNav';
 import StatsOverview from '@/components/features/statistics/StatsOverview';
 import TrendChart from '@/components/features/statistics/TrendChart';
 import HourlyDistribution from '@/components/features/statistics/HourlyDistribution';
 import HealthImpact from '@/components/features/statistics/HealthImpact';
-
-// 模拟数据
-const mockUser = {
-  username: '测试用户',
-  avatar_url: null,
-};
-
-// 最近7天数据
-const mockWeekData = [
-  { date: '01/05', count: 12, cost: 39.0 },
-  { date: '01/06', count: 15, cost: 48.75 },
-  { date: '01/07', count: 10, cost: 32.5 },
-  { date: '01/08', count: 14, cost: 45.5 },
-  { date: '01/09', count: 8, cost: 26.0 },
-  { date: '01/10', count: 13, cost: 42.25 },
-  { date: '01/11', count: 11, cost: 35.75 },
-];
-
-// 最近30天数据（简化版）
-const mockMonthData = Array.from({ length: 30 }, (_, i) => ({
-  date: `${String(i + 1).padStart(2, '0')}日`,
-  count: Math.floor(Math.random() * 10) + 8,
-  cost: (Math.random() * 20 + 25).toFixed(2),
-}));
-
-// 时段分布数据
-const mockHourlyData = [
-  { hour: '0-2', count: 2 },
-  { hour: '2-4', count: 0 },
-  { hour: '4-6', count: 1 },
-  { hour: '6-8', count: 8 },
-  { hour: '8-10', count: 15 },
-  { hour: '10-12', count: 12 },
-  { hour: '12-14', count: 10 },
-  { hour: '14-16', count: 18 },
-  { hour: '16-18', count: 14 },
-  { hour: '18-20', count: 11 },
-  { hour: '20-22', count: 7 },
-  { hour: '22-24', count: 4 },
-];
-
-// 统计概览数据
-const mockStats = {
-  today: { count: 8, cost: 26.0, change: -20 },
-  week: { count: 83, cost: 269.75, change: 5 },
-  month: { count: 342, cost: 1112.5, change: -8 },
-  avgDaily: 11.4,
-};
-
-// 健康数据
-const mockHealthData = {
-  totalCigarettes: 1245,
-  totalDays: 109,
-  moneySaved: 0, // 没有省钱，因为还在抽烟
-  moneySpent: 3850.5,
-  healthScore: 35, // 健康分数（满分100）
-};
+import { getCurrentUserProfile } from '@/lib/services/profile';
+import {
+  getStatsOverview,
+  getDailyTrend,
+  getHourlyDistribution,
+  getHealthImpact,
+} from '@/lib/services/statistics';
+import type { Profile } from '@/types/database';
 
 export default function StatisticsPage() {
   const [timePeriod, setTimePeriod] = useState<'week' | 'month'>('week');
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [stats, setStats] = useState<{
+    today: { count: number; cost: number; change: number };
+    week: { count: number; cost: number; change: number };
+    month: { count: number; cost: number; change: number };
+    avgDaily: number;
+  } | null>(null);
+  const [dailyTrend, setDailyTrend] = useState<
+    Array<{ date: string; smoke_count: number; total_cost: number }>
+  >([]);
+  const [hourlyData, setHourlyData] = useState<Array<{ hour: string; count: number }>>([]);
+  const [healthData, setHealthData] = useState<{
+    totalCigarettes: number;
+    totalDays: number;
+    moneySaved: number;
+    moneySpent: number;
+    healthScore: number;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const [profileData, statsData, trendData, hourlyDistData, healthImpactData] =
+        await Promise.all([
+          getCurrentUserProfile(),
+          getStatsOverview(),
+          getDailyTrend(),
+          getHourlyDistribution(),
+          getHealthImpact(),
+        ]);
+
+      if (!profileData) {
+        setError('无法加载用户资料');
+      } else {
+        setProfile(profileData);
+        setStats(statsData);
+        setDailyTrend(trendData);
+        setHourlyData(hourlyDistData);
+        setHealthData(healthImpactData);
+      }
+    } catch (err) {
+      setError('加载数据失败');
+      console.error('加载统计数据失败:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleTimePeriodChange = (_: React.SyntheticEvent, newValue: 'week' | 'month') => {
     setTimePeriod(newValue);
   };
 
-  const chartData = timePeriod === 'week' ? mockWeekData : mockMonthData;
+  // 根据时间周期过滤数据
+  const getFilteredChartData = () => {
+    if (timePeriod === 'week') {
+      // 最近7天
+      return dailyTrend.slice(-7).map(d => ({
+        date: format(new Date(d.date), 'MM/dd', { locale: zhCN }),
+        count: d.smoke_count,
+        cost: d.total_cost,
+      }));
+    } else {
+      // 最近30天
+      return dailyTrend.map(d => ({
+        date: format(new Date(d.date), 'dd日', { locale: zhCN }),
+        count: d.smoke_count,
+        cost: d.total_cost,
+      }));
+    }
+  };
+
+  // 加载中状态
+  if (loading) {
+    return (
+      <>
+        <TopNavbar user={null} />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+          }}
+        >
+          <CircularProgress />
+        </Box>
+        <BottomNav />
+      </>
+    );
+  }
+
+  // 错误状态
+  if (error || !profile || !stats || !healthData) {
+    return (
+      <>
+        <TopNavbar user={profile} />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+            p: 3,
+          }}
+        >
+          <Alert severity="error" sx={{ maxWidth: 600 }}>
+            {error || '加载失败'}
+          </Alert>
+        </Box>
+        <BottomNav />
+      </>
+    );
+  }
+
+  const chartData = getFilteredChartData();
 
   return (
     <>
-      <TopNavbar user={mockUser} />
+      <TopNavbar user={profile} />
 
       <Box
         component={motion.main}
@@ -96,7 +168,7 @@ export default function StatisticsPage() {
         <Container maxWidth="md" sx={{ py: 4 }}>
           <Stack spacing={4}>
             {/* 数据概览 */}
-            <StatsOverview stats={mockStats} />
+            <StatsOverview stats={stats} />
 
             {/* 趋势图表 */}
             <Box>
@@ -137,10 +209,10 @@ export default function StatisticsPage() {
             </Box>
 
             {/* 时段分布 */}
-            <HourlyDistribution data={mockHourlyData} />
+            <HourlyDistribution data={hourlyData} />
 
             {/* 健康影响 */}
-            <HealthImpact data={mockHealthData} />
+            <HealthImpact data={healthData} />
           </Stack>
         </Container>
       </Box>
