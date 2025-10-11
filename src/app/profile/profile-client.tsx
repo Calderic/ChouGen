@@ -11,7 +11,7 @@ import Achievements from '@/components/features/profile/Achievements';
 import PrivacySettings from '@/components/features/profile/PrivacySettings';
 import EditProfileDialog from '@/components/features/profile/EditProfileDialog';
 import { updateProfile } from '@/lib/services/client/profile';
-import type { Profile, Achievement, AchievementWithStatus } from '@/types/database';
+import type { Profile, AchievementWithStatus } from '@/types/database';
 
 interface ProfileClientProps {
   initialData: {
@@ -22,7 +22,7 @@ interface ProfileClientProps {
       month: { count: number; cost: number };
       total: { count: number; cost: number };
     };
-    achievements: Achievement[];
+    achievements: AchievementWithStatus[];
   };
 }
 
@@ -58,13 +58,29 @@ export function ProfileClient({ initialData }: ProfileClientProps) {
     privacy_allow_view_packs: boolean;
     privacy_allow_encouragements: boolean;
   }) => {
-    // 直接使用设置对象，TypeScript会推断类型
-    const result = await updateProfile(settings as Partial<Profile>);
+    // 隐私设置需要通过自定义的方式更新，因为 updateProfile 只接受基本字段
+    const supabase = (await import('@/lib/supabase/client')).createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (result.success) {
-      router.refresh();
+    if (!user) {
+      alert('未登录');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        ...settings,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+
+    if (error) {
+      alert(error.message || '更新失败');
     } else {
-      alert(result.error || '更新失败');
+      router.refresh();
     }
   };
 
@@ -105,7 +121,7 @@ export function ProfileClient({ initialData }: ProfileClientProps) {
             />
 
             {/* 成就徽章 */}
-            <Achievements achievements={initialData.achievements as AchievementWithStatus[]} />
+            <Achievements achievements={initialData.achievements} />
 
             {/* 隐私设置 */}
             <PrivacySettings

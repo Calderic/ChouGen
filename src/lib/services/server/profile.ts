@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import type { Profile, Achievement } from '@/types/database';
+import type { Profile, AchievementWithStatus } from '@/types/database';
 
 /**
  * 个人资料页面数据获取（服务端）
@@ -21,9 +21,9 @@ export async function getProfilePageData() {
     // 统计数据
     supabase.rpc('get_user_stats', { target_user_id: user.id }),
 
-    // 成就数据
-    supabase.from('achievements').select('*').eq('user_id', user.id).order('unlocked_at', {
-      ascending: false,
+    // 成就数据 - 使用 RPC 函数获取包含进度的成就列表
+    supabase.rpc('get_user_achievements_with_progress', {
+      target_user_id: user.id,
     }),
   ]);
 
@@ -56,6 +56,6 @@ export async function getProfilePageData() {
           month: { count: 0, cost: 0 },
           total: { count: 0, cost: 0 },
         },
-    achievements: (achievementsResult.data || []) as Achievement[],
+    achievements: (achievementsResult.data || []) as AchievementWithStatus[],
   };
 }
