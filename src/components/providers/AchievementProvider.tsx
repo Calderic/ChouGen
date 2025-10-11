@@ -56,8 +56,9 @@ export default function AchievementProvider({ children }: AchievementProviderPro
     };
 
     if ('requestIdleCallback' in window) {
-      // @ts-expect-error - requestIdleCallback is not in TypeScript's lib.dom.d.ts
-      requestIdleCallback(loadAchievements);
+      (
+        window as unknown as { requestIdleCallback: (callback: () => void) => void }
+      ).requestIdleCallback(loadAchievements);
     } else {
       setTimeout(loadAchievements, 2000);
     }

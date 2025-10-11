@@ -48,7 +48,6 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     const fileName = `${id}-${Date.now()}.${ext}`;
     const filePath = `packs/${fileName}`;
 
-    // @ts-expect-error - In Node.js runtime, File is supported in Next route handlers
     const { error: uploadError } = await supabase.storage.from('public').upload(filePath, file, {
       cacheControl: '3600',
       upsert: true,
