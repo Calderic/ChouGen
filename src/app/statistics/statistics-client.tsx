@@ -1,17 +1,49 @@
 'use client';
 
-import { Container, Box, Stack, Tabs, Tab } from '@mui/material';
+import { Container, Box, Stack, Tabs, Tab, Skeleton } from '@mui/material';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
+import dynamic from 'next/dynamic';
 import TopNavbar from '@/components/layout/TopNavbar';
 import BottomNav from '@/components/layout/BottomNav';
 import StatsOverview from '@/components/features/statistics/StatsOverview';
-import TrendChart from '@/components/features/statistics/TrendChart';
-import HourlyDistribution from '@/components/features/statistics/HourlyDistribution';
-import HealthImpact from '@/components/features/statistics/HealthImpact';
 import type { Profile } from '@/types/database';
+
+// 动态导入图表组件（这些组件依赖 Recharts，体积较大）
+const TrendChart = dynamic(() => import('@/components/features/statistics/TrendChart'), {
+  loading: () => (
+    <Box sx={{ p: 3 }}>
+      <Skeleton variant="text" width={120} height={32} sx={{ mb: 2 }} />
+      <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 3 }} />
+    </Box>
+  ),
+  ssr: false, // 图表只在客户端渲染
+});
+
+const HourlyDistribution = dynamic(
+  () => import('@/components/features/statistics/HourlyDistribution'),
+  {
+    loading: () => (
+      <Box sx={{ p: 3 }}>
+        <Skeleton variant="text" width={120} height={32} sx={{ mb: 2 }} />
+        <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 3 }} />
+      </Box>
+    ),
+    ssr: false,
+  }
+);
+
+const HealthImpact = dynamic(() => import('@/components/features/statistics/HealthImpact'), {
+  loading: () => (
+    <Box sx={{ p: 3 }}>
+      <Skeleton variant="text" width={120} height={32} sx={{ mb: 2 }} />
+      <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 3 }} />
+    </Box>
+  ),
+  ssr: false,
+});
 
 interface StatisticsClientProps {
   initialData: {

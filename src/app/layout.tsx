@@ -13,8 +13,21 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // 从环境变量获取 Supabase URL
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const supabaseDomain = supabaseUrl ? new URL(supabaseUrl).origin : '';
+
   return (
     <html lang="zh-CN">
+      <head>
+        {/* DNS 预解析和预连接 Supabase，减少首次请求延迟 */}
+        {supabaseDomain && (
+          <>
+            <link rel="dns-prefetch" href={supabaseDomain} />
+            <link rel="preconnect" href={supabaseDomain} crossOrigin="anonymous" />
+          </>
+        )}
+      </head>
       <body>
         <ThemeRegistry>
           <AchievementProvider>{children}</AchievementProvider>

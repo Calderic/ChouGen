@@ -4,14 +4,20 @@ import { Container, Box, Stack } from '@mui/material';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import TopNavbar from '@/components/layout/TopNavbar';
 import BottomNav from '@/components/layout/BottomNav';
 import ProfileCard from '@/components/features/profile/ProfileCard';
 import Achievements from '@/components/features/profile/Achievements';
 import PrivacySettings from '@/components/features/profile/PrivacySettings';
-import EditProfileDialog from '@/components/features/profile/EditProfileDialog';
 import { updateProfile } from '@/lib/services/client/profile';
 import type { Profile, AchievementWithStatus } from '@/types/database';
+
+// 动态导入编辑对话框（只在用户点击编辑按钮时加载）
+const EditProfileDialog = dynamic(() => import('@/components/features/profile/EditProfileDialog'), {
+  loading: () => null,
+  ssr: false,
+});
 
 interface ProfileClientProps {
   initialData: {

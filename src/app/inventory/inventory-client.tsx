@@ -5,13 +5,19 @@ import { Add as AddIcon } from '@mui/icons-material';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import TopNavbar from '@/components/layout/TopNavbar';
 import BottomNav from '@/components/layout/BottomNav';
 import ActivePacksList from '@/components/features/inventory/ActivePacksList';
 import EmptyPacksList from '@/components/features/inventory/EmptyPacksList';
-import AddPackDialog from '@/components/features/inventory/AddPackDialog';
 import { createPack, deletePack } from '@/lib/services/client/cigarette-packs';
 import type { Profile, CigarettePack } from '@/types/database';
+
+// 动态导入对话框组件（只在用户点击添加按钮时加载）
+const AddPackDialog = dynamic(() => import('@/components/features/inventory/AddPackDialog'), {
+  loading: () => null, // 对话框不需要加载状态
+  ssr: false,
+});
 
 interface InventoryClientProps {
   initialData: {

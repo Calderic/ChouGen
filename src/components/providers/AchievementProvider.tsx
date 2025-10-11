@@ -46,14 +46,24 @@ export default function AchievementProvider({ children }: AchievementProviderPro
       }
     });
 
-    // 获取所有成就定义并建立映射
-    getAllAchievements().then(achievements => {
-      const map = new Map<string, Achievement>();
-      achievements.forEach(achievement => {
-        map.set(achievement.id, achievement);
+    // 延迟加载成就定义（不阻塞首屏）
+    // 使用 requestIdleCallback 在浏览器空闲时加载
+    const loadAchievements = () => {
+      getAllAchievements().then(achievements => {
+        const map = new Map<string, Achievement>();
+        achievements.forEach(achievement => {
+          map.set(achievement.id, achievement);
+        });
+        setAchievementsMap(map);
       });
-      setAchievementsMap(map);
-    });
+    };
+
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(loadAchievements);
+    } else {
+      // 降级方案：延迟 2 秒加载
+      setTimeout(loadAchievements, 2000);
+    }
   }, []);
 
   // 订阅成就解锁事件
