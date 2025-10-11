@@ -1,7 +1,7 @@
 'use client';
 
-import { Container, Box, Typography, Tabs, Tab } from '@mui/material';
-import { useState } from 'react';
+import { Container, Box, Typography, Tabs, Tab, CircularProgress, Alert } from '@mui/material';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import TopNavbar from '@/components/layout/TopNavbar';
 import BottomNav from '@/components/layout/BottomNav';
@@ -9,105 +9,153 @@ import TopThree from '@/components/features/leaderboard/TopThree';
 import LeaderboardList from '@/components/features/leaderboard/LeaderboardList';
 import MyRanking from '@/components/features/leaderboard/MyRanking';
 import UserDetailDialog from '@/components/features/leaderboard/UserDetailDialog';
-
-// 模拟数据
-const mockUser = {
-  username: '测试用户',
-  avatar_url: null,
-};
-
-const mockLeaderboardData = [
-  {
-    user_id: '1',
-    username: '烟王老李',
-    avatar_url: null,
-    smoke_count: 156,
-    total_cost: 780.5,
-    rank: 1,
-  },
-  {
-    user_id: '2',
-    username: '戒烟失败者',
-    avatar_url: null,
-    smoke_count: 142,
-    total_cost: 710.0,
-    rank: 2,
-  },
-  {
-    user_id: '3',
-    username: '烟鬼小王',
-    avatar_url: null,
-    smoke_count: 128,
-    total_cost: 640.0,
-    rank: 3,
-  },
-  {
-    user_id: '4',
-    username: '烟民张三',
-    avatar_url: null,
-    smoke_count: 98,
-    total_cost: 490.0,
-    rank: 4,
-  },
-  {
-    user_id: '5',
-    username: '测试用户',
-    avatar_url: null,
-    smoke_count: 75,
-    total_cost: 375.0,
-    rank: 5,
-  },
-  // ... 更多数据
-];
-
-const mockMyRanking = {
-  rank: 5,
-  smoke_count: 75,
-  total_cost: 375.0,
-};
-
-const mockUserDetail = {
-  user_id: '1',
-  username: '烟王老李',
-  avatar_url: null,
-  bio: '戒烟中...失败了156次',
-  today_smokes: 8,
-  last_smoke_time: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30分钟前
-  last_cigarette: '中华（软）',
-  privacy_show_stats: true,
-  privacy_allow_encouragements: true,
-};
+import { getCurrentUserProfile } from '@/lib/services/profile';
+import {
+  getLeaderboard,
+  getMyRanking,
+  getUserDetail,
+  sendEncouragement,
+  type LeaderboardPeriod,
+  type UserDetail,
+} from '@/lib/services/leaderboard';
+import type { Profile, LeaderboardEntry } from '@/types/database';
 
 export default function LeaderboardPage() {
-  const [period, setPeriod] = useState('week');
-  const [_selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [period, setPeriod] = useState<LeaderboardPeriod>('week');
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+  const [myRanking, setMyRanking] = useState<{
+    rank: number | null;
+    smoke_count: number;
+    total_cost: number;
+  } | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserDetail | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handlePeriodChange = (_: React.SyntheticEvent, newValue: string) => {
-    setPeriod(newValue);
+  // 加载数据
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // 切换时间段时重新加载
+  useEffect(() => {
+    if (profile) {
+      loadLeaderboard();
+    }
+  }, [period]);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const profileData = await getCurrentUserProfile();
+      if (!profileData) {
+        setError('无法加载用户资料');
+      } else {
+        setProfile(profileData);
+        await loadLeaderboard();
+      }
+    } catch (err) {
+      setError('加载数据失败');
+      console.error('加载数据失败:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleUserClick = (userId: string) => {
-    setSelectedUserId(userId);
-    setDialogOpen(true);
+  const loadLeaderboard = async () => {
+    const [leaderboard, ranking] = await Promise.all([
+      getLeaderboard(period, 100),
+      getMyRanking(period),
+    ]);
+    setLeaderboardData(leaderboard);
+    setMyRanking(ranking);
+  };
+
+  const handlePeriodChange = (_: React.SyntheticEvent, newValue: string) => {
+    setPeriod(newValue as LeaderboardPeriod);
+  };
+
+  const handleUserClick = async (userId: string) => {
+    const userDetail = await getUserDetail(userId);
+    if (userDetail) {
+      setSelectedUser(userDetail);
+      setDialogOpen(true);
+    }
   };
 
   const handleDialogClose = () => {
     setDialogOpen(false);
+    setSelectedUser(null);
   };
 
-  const handleEncourage = (userId: string) => {
-    console.log('给用户打气:', userId);
-    // TODO: 实现打气功能
-    setDialogOpen(false);
+  const handleEncourage = async (userId: string) => {
+    const message = prompt('输入打气的话:');
+    if (!message) return;
+
+    const result = await sendEncouragement(userId, message);
+    if (result.success) {
+      alert('打气成功！');
+      setDialogOpen(false);
+    } else {
+      alert(result.error || '打气失败');
+    }
   };
 
-  const topThree = mockLeaderboardData.slice(0, 3);
-  const restOfList = mockLeaderboardData.slice(3, 30); // 4-30名
+  const topThree = leaderboardData.slice(0, 3);
+  const restOfList = leaderboardData.slice(3, 30); // 4-30名
+
+  // 加载中状态
+  if (loading) {
+    return (
+      <>
+        <TopNavbar user={null} />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+          }}
+        >
+          <CircularProgress />
+        </Box>
+        <BottomNav />
+      </>
+    );
+  }
+
+  // 错误状态
+  if (error || !profile) {
+    return (
+      <>
+        <TopNavbar user={null} />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+            p: 3,
+          }}
+        >
+          <Alert severity="error" sx={{ maxWidth: 600 }}>
+            {error || '加载失败'}
+          </Alert>
+        </Box>
+        <BottomNav />
+      </>
+    );
+  }
 
   return (
     <>
-      <TopNavbar user={mockUser} />
+      <TopNavbar user={profile} />
 
       <Box
         component={motion.main}
@@ -205,18 +253,20 @@ export default function LeaderboardPage() {
         </Container>
 
         {/* 我的排名（浮动在底部） */}
-        <MyRanking ranking={mockMyRanking} />
+        {myRanking && <MyRanking ranking={myRanking} />}
       </Box>
 
       <BottomNav />
 
       {/* 用户详情弹窗 */}
-      <UserDetailDialog
-        open={dialogOpen}
-        onClose={handleDialogClose}
-        user={mockUserDetail}
-        onEncourage={handleEncourage}
-      />
+      {selectedUser && (
+        <UserDetailDialog
+          open={dialogOpen}
+          onClose={handleDialogClose}
+          user={selectedUser}
+          onEncourage={handleEncourage}
+        />
+      )}
     </>
   );
 }

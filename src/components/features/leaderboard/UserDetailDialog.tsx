@@ -25,15 +25,15 @@ interface UserDetail {
   user_id: string;
   username: string;
   avatar_url: string | null;
-  bio?: string;
+  bio: string | null;
+  status: string;
 
   // 统计数据
   today_smokes: number;
-  last_smoke_time?: string;
-  last_cigarette?: string;
+  last_smoke_time?: string | null;
+  last_cigarette?: string | null;
 
   // 隐私设置
-  privacy_show_stats: boolean; // 是否显示统计数据
   privacy_allow_encouragements: boolean; // 是否允许打气
 }
 
@@ -137,68 +137,66 @@ export default function UserDetailDialog({
 
         {/* 统计信息 */}
         <Box sx={{ px: 3, py: 3 }}>
-          {user.privacy_show_stats ? (
-            <Stack spacing={2.5}>
-              {/* 今日已抽 */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 2,
-                    bgcolor: 'primary.lighter',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <SmokingIcon sx={{ color: 'primary.main' }} />
-                </Box>
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                    今日已抽
-                  </Typography>
-                  <Typography variant="h6" fontWeight={600}>
-                    {user.today_smokes} 支
-                  </Typography>
-                </Box>
+          <Stack spacing={2.5}>
+            {/* 今日已抽 */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box
+                sx={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 2,
+                  bgcolor: 'primary.lighter',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <SmokingIcon sx={{ color: 'primary.main' }} />
               </Box>
+              <Box sx={{ flexGrow: 1 }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                  今日已抽
+                </Typography>
+                <Typography variant="h6" fontWeight={600}>
+                  {user.today_smokes} 支
+                </Typography>
+              </Box>
+            </Box>
 
-              <Divider />
-
-              {/* 上一支烟时间 */}
-              {lastSmokeTimeAgo && (
-                <>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box
-                      sx={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 2,
-                        bgcolor: 'info.lighter',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <TimeIcon sx={{ color: 'info.main' }} />
-                    </Box>
-                    <Box sx={{ flexGrow: 1 }}>
-                      <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                        上一支烟
-                      </Typography>
-                      <Typography variant="body2" fontWeight={600}>
-                        {lastSmokeTimeAgo}
-                      </Typography>
-                    </Box>
+            {/* 上一支烟时间 */}
+            {lastSmokeTimeAgo && (
+              <>
+                <Divider />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 2,
+                      bgcolor: 'info.lighter',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <TimeIcon sx={{ color: 'info.main' }} />
                   </Box>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                      上一支烟
+                    </Typography>
+                    <Typography variant="body2" fontWeight={600}>
+                      {lastSmokeTimeAgo}
+                    </Typography>
+                  </Box>
+                </Box>
+              </>
+            )}
 
-                  <Divider />
-                </>
-              )}
-
-              {/* 上一支抽的烟 */}
-              {user.last_cigarette && (
+            {/* 上一支抽的烟 */}
+            {user.last_cigarette && (
+              <>
+                <Divider />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Box
                     sx={{
@@ -222,22 +220,9 @@ export default function UserDetailDialog({
                     </Typography>
                   </Box>
                 </Box>
-              )}
-            </Stack>
-          ) : (
-            // 隐私保护提示
-            <Box
-              sx={{
-                textAlign: 'center',
-                py: 4,
-              }}
-            >
-              <HiddenIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
-              <Typography variant="body2" color="text.secondary">
-                该用户已隐藏详细信息
-              </Typography>
-            </Box>
-          )}
+              </>
+            )}
+          </Stack>
         </Box>
 
         {/* 打气按钮 */}

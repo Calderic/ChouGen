@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from 'react';
 
 interface MyRankingProps {
   ranking: {
-    rank: number;
+    rank: number | null;
     smoke_count: number;
     total_cost: number;
   } | null;
@@ -121,16 +121,18 @@ export default function MyRanking({ ranking }: MyRankingProps) {
                     width: 40,
                     height: 40,
                     borderRadius: '50%',
-                    bgcolor: 'primary.main',
+                    bgcolor: ranking.rank ? 'primary.main' : 'grey.400',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)',
+                    boxShadow: ranking.rank
+                      ? '0 2px 8px rgba(37, 99, 235, 0.3)'
+                      : '0 2px 8px rgba(0, 0, 0, 0.1)',
                     flexShrink: 0,
                   }}
                 >
                   <Typography variant="h6" fontWeight={700} color="white" sx={{ fontSize: '1rem' }}>
-                    {ranking.rank}
+                    {ranking.rank || '-'}
                   </Typography>
                 </Box>
                 <Box sx={{ minWidth: 0 }}>
@@ -138,7 +140,7 @@ export default function MyRanking({ ranking }: MyRankingProps) {
                     我的排名
                   </Typography>
                   <Typography variant="body2" fontWeight={600} noWrap>
-                    第 {ranking.rank} 名
+                    {ranking.rank ? `第 ${ranking.rank} 名` : '未上榜'}
                   </Typography>
                 </Box>
               </Box>

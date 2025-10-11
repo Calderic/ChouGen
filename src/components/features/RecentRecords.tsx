@@ -21,7 +21,7 @@ interface SmokingRecord {
   cost: number;
   pack: {
     name: string;
-    brand?: string;
+    brand: string | null;
   };
 }
 

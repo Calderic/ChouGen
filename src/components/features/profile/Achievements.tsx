@@ -46,20 +46,20 @@ export default function Achievements({ achievements }: AchievementsProps) {
           const color = categoryColorMap[achievement.category] || 'primary';
 
           return (
-            <Tooltip
-              key={achievement.achievement_id}
-              title={
-                achievement.unlocked && achievement.unlocked_at
-                  ? `于 ${format(new Date(achievement.unlocked_at), 'yyyy年MM月dd日', { locale: zhCN })} 解锁`
-                  : achievement.description
-              }
-              arrow
+            <Box
+              key={achievement.id}
+              component={motion.div}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.05 }}
             >
-              <Box
-                component={motion.div}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 }}
+              <Tooltip
+                title={
+                  achievement.unlocked && achievement.unlocked_at
+                    ? `于 ${format(new Date(achievement.unlocked_at), 'yyyy年MM月dd日', { locale: zhCN })} 解锁`
+                    : achievement.description
+                }
+                arrow
               >
                 <Card
                   elevation={0}
@@ -124,8 +124,8 @@ export default function Achievements({ achievements }: AchievementsProps) {
                     </Typography>
                   </CardContent>
                 </Card>
-              </Box>
-            </Tooltip>
+              </Tooltip>
+            </Box>
           );
         })}
       </Box>

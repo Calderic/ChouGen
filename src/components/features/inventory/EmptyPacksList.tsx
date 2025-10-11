@@ -1,7 +1,11 @@
 'use client';
 
 import { Box, Typography, Card, CardContent, IconButton, Stack, Chip } from '@mui/material';
-import { Delete as DeleteIcon, CheckCircle as CompleteIcon, LocalAtm as MoneyIcon } from '@mui/icons-material';
+import {
+  Delete as DeleteIcon,
+  CheckCircle as CompleteIcon,
+  LocalAtm as MoneyIcon,
+} from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
@@ -10,12 +14,12 @@ import { useRouter } from 'next/navigation';
 interface Pack {
   id: string;
   name: string;
-  brand?: string;
+  brand: string | null;
   remaining_count: number;
   total_count: number;
   price: number;
   purchase_date: string;
-  photo_url?: string | null;
+  photo_url: string | null;
 }
 
 interface EmptyPacksListProps {
@@ -56,7 +60,9 @@ export default function EmptyPacksList({ data, onDelete }: EmptyPacksListProps) 
       <AnimatePresence>
         {data.map((pack, index) => {
           const pricePerStick = (pack.price / pack.total_count).toFixed(2);
-          const purchaseDate = format(new Date(pack.purchase_date), 'yyyy年MM月dd日', { locale: zhCN });
+          const purchaseDate = format(new Date(pack.purchase_date), 'yyyy年MM月dd日', {
+            locale: zhCN,
+          });
 
           return (
             <PackCard
@@ -86,7 +92,9 @@ export default function EmptyPacksList({ data, onDelete }: EmptyPacksListProps) 
               }}
             >
               <CardContent sx={{ pb: 2, pt: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   {/* 左侧：完成图标 */}
                   <Box
                     sx={{
@@ -142,7 +150,7 @@ export default function EmptyPacksList({ data, onDelete }: EmptyPacksListProps) 
                   {onDelete && (
                     <IconButton
                       size="small"
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation(); // 阻止冒泡到卡片点击事件
                         onDelete(pack.id);
                       }}

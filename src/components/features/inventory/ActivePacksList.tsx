@@ -10,7 +10,11 @@ import {
   Stack,
   Chip,
 } from '@mui/material';
-import { Delete as DeleteIcon, SmokingRooms as SmokingIcon, LocalAtm as MoneyIcon } from '@mui/icons-material';
+import {
+  Delete as DeleteIcon,
+  SmokingRooms as SmokingIcon,
+  LocalAtm as MoneyIcon,
+} from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
@@ -19,12 +23,12 @@ import { useRouter } from 'next/navigation';
 interface Pack {
   id: string;
   name: string;
-  brand?: string;
+  brand: string | null;
   remaining_count: number;
   total_count: number;
   price: number;
   purchase_date: string;
-  photo_url?: string | null;
+  photo_url: string | null;
 }
 
 interface ActivePacksListProps {
@@ -95,7 +99,14 @@ export default function ActivePacksList({ data, onDelete }: ActivePacksListProps
             >
               <CardContent sx={{ pb: 2.5, pt: 2.5 }}>
                 {/* 头部：名称和删除按钮 */}
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    mb: 2,
+                  }}
+                >
                   <Box sx={{ flexGrow: 1 }}>
                     <Typography variant="h6" fontWeight={600} gutterBottom>
                       {pack.brand && `${pack.brand} · `}
@@ -109,7 +120,7 @@ export default function ActivePacksList({ data, onDelete }: ActivePacksListProps
                   {onDelete && (
                     <IconButton
                       size="small"
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation(); // 阻止冒泡到卡片点击事件
                         onDelete(pack.id);
                       }}
@@ -140,7 +151,12 @@ export default function ActivePacksList({ data, onDelete }: ActivePacksListProps
                     </Typography>
                     <Typography variant="h6" fontWeight={600} color="primary.main">
                       {pack.remaining_count}
-                      <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
+                      <Typography
+                        component="span"
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ ml: 0.5 }}
+                      >
                         / {pack.total_count}
                       </Typography>
                     </Typography>
@@ -191,11 +207,23 @@ export default function ActivePacksList({ data, onDelete }: ActivePacksListProps
                       bgcolor: 'rgba(0, 0, 0, 0.04)',
                       '& .MuiLinearProgress-bar': {
                         borderRadius: 3,
-                        bgcolor: progress > 30 ? 'primary.main' : progress > 10 ? 'warning.main' : 'error.main',
+                        bgcolor:
+                          progress > 30
+                            ? 'primary.main'
+                            : progress > 10
+                              ? 'warning.main'
+                              : 'error.main',
                       },
                     }}
                   />
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mt: 1,
+                    }}
+                  >
                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
                       {progress.toFixed(0)}% 剩余
                     </Typography>

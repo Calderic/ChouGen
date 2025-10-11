@@ -24,7 +24,7 @@ import { useState, useEffect } from 'react';
 interface Pack {
   id: string;
   name: string;
-  brand?: string;
+  brand: string | null;
   total_count: number;
   price: number;
 }

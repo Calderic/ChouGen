@@ -16,7 +16,7 @@ import { SmokingRooms as SmokingIcon, LocalAtm as MoneyIcon } from '@mui/icons-m
 interface CigarettePack {
   id: string;
   name: string;
-  brand?: string;
+  brand: string | null;
   remaining_count: number;
   total_count: number;
   price: number;
