@@ -27,7 +27,16 @@ export default function TopThree({ data, onUserClick }: TopThreeProps) {
 
   // 按名次排序：第2名（左），第1名（中），第3名（右）
   const [first, second, third] = data;
-  const displayOrder = second && third ? [second, first, third] : [first];
+
+  // 根据实际有的用户数量来决定显示顺序
+  let displayOrder: LeaderboardUser[];
+  if (data.length === 1) {
+    displayOrder = [first];
+  } else if (data.length === 2) {
+    displayOrder = [second, first];
+  } else {
+    displayOrder = [second, first, third];
+  }
 
   const getTrophyColor = (rank: number) => {
     switch (rank) {
