@@ -27,7 +27,24 @@ export default function TopThree({ data, onUserClick }: TopThreeProps) {
 
   // 按名次排序：第2名（左），第1名（中），第3名（右）
   const [first, second, third] = data;
-  const displayOrder = second && third ? [second, first, third] : [first];
+
+  // 创建占位对象，用于显示"虚位以待"
+  const createPlaceholder = (rank: number): LeaderboardUser => ({
+    user_id: `placeholder-${rank}`,
+    username: '虚位以待',
+    avatar_url: null,
+    smoke_count: 0,
+    total_cost: 0,
+    rank,
+  });
+
+  // 确保始终显示3个位置，不足的用占位符填充
+  const second_user = second || createPlaceholder(2);
+  const first_user = first || createPlaceholder(1);
+  const third_user = third || createPlaceholder(3);
+
+  // 显示顺序：第2名（左），第1名（中），第3名（右）
+  const displayOrder = [second_user, first_user, third_user];
 
   const getTrophyColor = (rank: number) => {
     switch (rank) {
@@ -69,6 +86,7 @@ export default function TopThree({ data, onUserClick }: TopThreeProps) {
         {displayOrder.map((user, index) => {
           const isFirst = user.rank === 1;
           const podiumHeight = getPodiumHeight(user.rank);
+          const isPlaceholder = user.user_id.startsWith('placeholder-');
 
           return (
             <PodiumCard
@@ -76,21 +94,22 @@ export default function TopThree({ data, onUserClick }: TopThreeProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.15 }}
-              onClick={() => onUserClick?.(user.user_id)}
+              onClick={() => !isPlaceholder && onUserClick?.(user.user_id)}
               sx={{
                 position: 'relative',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                cursor: 'pointer',
+                cursor: isPlaceholder ? 'default' : 'pointer',
                 transition: 'transform 0.2s',
+                opacity: isPlaceholder ? 0.5 : 1,
                 '&:hover': {
-                  transform: 'translateY(-4px)',
+                  transform: isPlaceholder ? 'none' : 'translateY(-4px)',
                 },
               }}
             >
               {/* 奖杯图标 */}
-              {isFirst && (
+              {isFirst && !isPlaceholder && (
                 <Box
                   sx={{
                     position: 'absolute',
@@ -143,15 +162,19 @@ export default function TopThree({ data, onUserClick }: TopThreeProps) {
               <Typography
                 variant={isFirst ? 'h6' : 'body2'}
                 fontWeight={700}
-                color="primary.main"
+                color={isPlaceholder ? 'text.disabled' : 'primary.main'}
                 sx={{ mb: 0.5 }}
               >
-                {user.smoke_count} 支
+                {isPlaceholder ? '- -' : `${user.smoke_count} 支`}
               </Typography>
 
               {/* 花费 */}
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 2 }}>
-                ¥{user.total_cost.toFixed(2)}
+              <Typography
+                variant="caption"
+                color={isPlaceholder ? 'text.disabled' : 'text.secondary'}
+                sx={{ mb: 2 }}
+              >
+                {isPlaceholder ? '- -' : `¥${user.total_cost.toFixed(2)}`}
               </Typography>
 
               {/* 领奖台 */}
