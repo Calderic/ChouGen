@@ -18,6 +18,7 @@ import { useSearchParams } from 'next/navigation';
 function LoginPageContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
+  const redirect = searchParams.get('redirect') || '/';
 
   const [formData, setFormData] = useState({
     email: '',
@@ -31,7 +32,10 @@ function LoginPageContent() {
     setLoading(true);
     setErrorMessage('');
 
-    const result = await signIn(formData);
+    const result = await signIn({
+      ...formData,
+      redirect,
+    });
 
     if (result?.error) {
       setErrorMessage(result.error);
@@ -41,7 +45,12 @@ function LoginPageContent() {
   };
 
   const handleLinuxdoLogin = () => {
-    window.location.href = '/api/auth/linuxdo';
+    // 将重定向路径传递给 Linux.do OAuth
+    const url = new URL('/api/auth/linuxdo', window.location.origin);
+    if (redirect && redirect !== '/') {
+      url.searchParams.set('redirect', redirect);
+    }
+    window.location.href = url.toString();
   };
 
   return (

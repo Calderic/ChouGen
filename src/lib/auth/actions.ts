@@ -8,11 +8,7 @@ import { redirect } from 'next/navigation';
  * 邮箱密码注册
  * 注意：不强制验证邮箱，但会发送验证邮件，用户可以稍后验证
  */
-export async function signUp(formData: {
-  email: string;
-  password: string;
-  username: string;
-}) {
+export async function signUp(formData: { email: string; password: string; username: string }) {
   const supabase = await createClient();
 
   // 1. 使用普通 signUp（会发送验证邮件，但不阻止登录）
@@ -67,7 +63,7 @@ export async function signUp(formData: {
 /**
  * 邮箱密码登录
  */
-export async function signIn(formData: { email: string; password: string }) {
+export async function signIn(formData: { email: string; password: string; redirect?: string }) {
   const supabase = await createClient();
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -79,7 +75,8 @@ export async function signIn(formData: { email: string; password: string }) {
     return { error: error.message };
   }
 
-  redirect('/');
+  // 登录成功后跳转到原始路径或首页
+  redirect(formData.redirect || '/');
 }
 
 /**
@@ -106,11 +103,7 @@ export async function getUser() {
   }
 
   // 获取完整的用户信息
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
 
   return profile;
 }
