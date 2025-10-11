@@ -22,7 +22,7 @@ interface SmokingTimelineProps {
   pack: Pack;
 }
 
-export default function SmokingTimeline({ records, pack }: SmokingTimelineProps) {
+export default function SmokingTimeline({ records, pack: _pack }: SmokingTimelineProps) {
   if (records.length === 0) {
     return (
       <Card
@@ -131,7 +131,14 @@ export default function SmokingTimeline({ records, pack }: SmokingTimelineProps)
                       },
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        mb: 1,
+                      }}
+                    >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <SmokingIcon sx={{ fontSize: 20, color: 'primary.main' }} />
                         <Typography variant="body2" fontWeight={700}>

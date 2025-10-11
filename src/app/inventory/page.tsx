@@ -62,8 +62,6 @@ const mockEmptyPacks = [
   },
 ];
 
-const PageContainer = motion(Box);
-
 export default function InventoryPage() {
   const [tab, setTab] = useState(0);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -80,7 +78,13 @@ export default function InventoryPage() {
     setAddDialogOpen(false);
   };
 
-  const handleAddPack = (packData: any) => {
+  const handleAddPack = (packData: {
+    name: string;
+    brand: string;
+    total_count: number;
+    price: number;
+    purchase_date: string;
+  }) => {
     console.log('添加香烟:', packData);
     // TODO: 实现添加香烟功能
     setAddDialogOpen(false);
@@ -95,8 +99,8 @@ export default function InventoryPage() {
     <>
       <TopNavbar user={mockUser} />
 
-      <PageContainer
-        component="main"
+      <Box
+        component={motion.main}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -181,7 +185,7 @@ export default function InventoryPage() {
         >
           <AddIcon />
         </Fab>
-      </PageContainer>
+      </Box>
 
       <BottomNav />
 

@@ -1,7 +1,7 @@
 'use client';
 
-import { Box, Typography, Paper, Chip } from '@mui/material';
-import { SmokingRooms as SmokingIcon, LocalAtm as MoneyIcon, TrendingUp as RankIcon } from '@mui/icons-material';
+import { Box, Typography, Paper } from '@mui/material';
+import { SmokingRooms as SmokingIcon, LocalAtm as MoneyIcon } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 
@@ -12,8 +12,6 @@ interface MyRankingProps {
     total_cost: number;
   } | null;
 }
-
-const FloatingCard = motion(Paper);
 
 export default function MyRanking({ ranking }: MyRankingProps) {
   const [isVisible, setIsVisible] = useState(true);
@@ -87,7 +85,8 @@ export default function MyRanking({ ranking }: MyRankingProps) {
             px: 2,
           }}
         >
-          <FloatingCard
+          <Paper
+            component={motion.div}
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
@@ -145,7 +144,9 @@ export default function MyRanking({ ranking }: MyRankingProps) {
               </Box>
 
               {/* 右侧：统计数据 */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, sm: 3 }, flexShrink: 0 }}>
+              <Box
+                sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, sm: 3 }, flexShrink: 0 }}
+              >
                 {/* 抽烟数 */}
                 <Box sx={{ textAlign: 'right' }}>
                   <Typography
@@ -155,16 +156,35 @@ export default function MyRanking({ ranking }: MyRankingProps) {
                   >
                     抽烟数
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end' }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      justifyContent: 'flex-end',
+                    }}
+                  >
                     <SmokingIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-                    <Typography variant="body2" fontWeight={700} color="primary.main" sx={{ whiteSpace: 'nowrap' }}>
+                    <Typography
+                      variant="body2"
+                      fontWeight={700}
+                      color="primary.main"
+                      sx={{ whiteSpace: 'nowrap' }}
+                    >
                       {ranking.smoke_count} 支
                     </Typography>
                   </Box>
                 </Box>
 
                 {/* 分隔线 */}
-                <Box sx={{ width: 1, height: 32, bgcolor: 'divider', display: { xs: 'none', sm: 'block' } }} />
+                <Box
+                  sx={{
+                    width: 1,
+                    height: 32,
+                    bgcolor: 'divider',
+                    display: { xs: 'none', sm: 'block' },
+                  }}
+                />
 
                 {/* 花费 */}
                 <Box sx={{ textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
@@ -175,16 +195,28 @@ export default function MyRanking({ ranking }: MyRankingProps) {
                   >
                     总花费
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end' }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      justifyContent: 'flex-end',
+                    }}
+                  >
                     <MoneyIcon sx={{ fontSize: 16, color: 'success.main' }} />
-                    <Typography variant="body2" fontWeight={700} color="success.main" sx={{ whiteSpace: 'nowrap' }}>
+                    <Typography
+                      variant="body2"
+                      fontWeight={700}
+                      color="success.main"
+                      sx={{ whiteSpace: 'nowrap' }}
+                    >
                       ¥{ranking.total_cost.toFixed(2)}
                     </Typography>
                   </Box>
                 </Box>
               </Box>
             </Box>
-          </FloatingCard>
+          </Paper>
         </Box>
       )}
     </AnimatePresence>

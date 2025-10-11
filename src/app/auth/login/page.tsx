@@ -11,12 +11,11 @@ import {
   Link as MuiLink,
 } from '@mui/material';
 import Link from 'next/link';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { signIn } from '@/lib/auth/actions';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
-  const router = useRouter();
+function LoginPageContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
 
@@ -76,20 +75,14 @@ export default function LoginPage() {
         )}
 
         {/* 邮箱密码登录表单 */}
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          sx={{ width: '100%', mt: 2 }}
-        >
+        <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', mt: 2 }}>
           <TextField
             fullWidth
             label="邮箱"
             type="email"
             required
             value={formData.email}
-            onChange={(e) =>
-              setFormData({ ...formData, email: e.target.value })
-            }
+            onChange={e => setFormData({ ...formData, email: e.target.value })}
             sx={{ mb: 2 }}
           />
 
@@ -99,9 +92,7 @@ export default function LoginPage() {
             type="password"
             required
             value={formData.password}
-            onChange={(e) =>
-              setFormData({ ...formData, password: e.target.value })
-            }
+            onChange={e => setFormData({ ...formData, password: e.target.value })}
             sx={{ mb: 3 }}
           />
 
@@ -138,5 +129,13 @@ export default function LoginPage() {
         </Typography>
       </Box>
     </Container>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

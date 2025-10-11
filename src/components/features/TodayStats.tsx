@@ -1,7 +1,11 @@
 'use client';
 
 import { Card, CardContent, Typography, Box, Grid } from '@mui/material';
-import { SmokingRooms as SmokingIcon, LocalAtm as MoneyIcon, TrendingUp as TrendIcon } from '@mui/icons-material';
+import {
+  SmokingRooms as SmokingIcon,
+  LocalAtm as MoneyIcon,
+  TrendingUp as TrendIcon,
+} from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
 interface TodayStatsProps {
@@ -17,7 +21,7 @@ export default function TodayStats({
   todayCount,
   todayCost,
   weekCount,
-  monthCount,
+  monthCount: _monthCount,
 }: TodayStatsProps) {
   const stats = [
     {
@@ -59,7 +63,7 @@ export default function TodayStats({
       </Typography>
       <Grid container spacing={2}>
         {stats.map((stat, index) => (
-          <Grid item xs={4} key={stat.label}>
+          <Grid size={{ xs: 4 }} key={stat.label}>
             <StatCard
               elevation={0}
               initial={{ opacity: 0, y: 20 }}
@@ -105,14 +109,24 @@ export default function TodayStats({
                 >
                   {stat.value}
                   {stat.unit && (
-                    <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.5 }}>
+                    <Typography
+                      component="span"
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ ml: 0.5 }}
+                    >
                       {stat.unit}
                     </Typography>
                   )}
                 </Typography>
 
                 {/* 标签 */}
-                <Typography variant="caption" color="text.secondary" noWrap sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  noWrap
+                  sx={{ fontWeight: 500 }}
+                >
                   {stat.label}
                 </Typography>
               </CardContent>

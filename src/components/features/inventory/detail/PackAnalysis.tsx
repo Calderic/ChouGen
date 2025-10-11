@@ -1,15 +1,13 @@
 'use client';
 
-import { Box, Typography, Card, CardContent, Chip } from '@mui/material';
+import { Box, Typography, Card, CardContent } from '@mui/material';
 import {
   Whatshot as HotIcon,
-  Bedtime as SleepIcon,
   WbSunny as DayIcon,
   Nightlight as NightIcon,
-  Weekend as WeekendIcon,
   TrendingUp as TrendIcon,
 } from '@mui/icons-material';
-import { parseISO, differenceInMinutes, differenceInHours, getHours, getDay } from 'date-fns';
+import { parseISO, differenceInMinutes, getHours } from 'date-fns';
 
 interface Pack {
   name: string;
@@ -30,7 +28,11 @@ interface PackAnalysisProps {
   smokedCount: number;
 }
 
-export default function PackAnalysis({ pack, records, smokedCount }: PackAnalysisProps) {
+export default function PackAnalysis({
+  pack,
+  records,
+  smokedCount: _smokedCount,
+}: PackAnalysisProps) {
   if (records.length === 0) {
     return (
       <Card
@@ -70,7 +72,8 @@ export default function PackAnalysis({ pack, records, smokedCount }: PackAnalysi
     }
   }
 
-  const avgInterval = intervals.length > 0 ? Math.round(intervals.reduce((a, b) => a + b, 0) / intervals.length) : 0;
+  const avgInterval =
+    intervals.length > 0 ? Math.round(intervals.reduce((a, b) => a + b, 0) / intervals.length) : 0;
   const avgIntervalHours = Math.floor(avgInterval / 60);
   const avgIntervalMinutes = avgInterval % 60;
 
@@ -78,12 +81,8 @@ export default function PackAnalysis({ pack, records, smokedCount }: PackAnalysi
   const minInterval = intervals.length > 0 ? Math.min(...intervals) : 0;
   const minIntervalStr = `${Math.floor(minInterval / 60)}小时${minInterval % 60}分钟`;
 
-  // 最慢间隔
-  const maxInterval = intervals.length > 0 ? Math.max(...intervals) : 0;
-  const maxIntervalStr = `${Math.floor(maxInterval / 60)}小时${maxInterval % 60}分钟`;
-
   // 白天 vs 晚上
-  const daytimeCount = records.filter((r) => {
+  const daytimeCount = records.filter(r => {
     const hour = getHours(parseISO(r.smoked_at));
     return hour >= 6 && hour < 18;
   }).length;
@@ -91,18 +90,9 @@ export default function PackAnalysis({ pack, records, smokedCount }: PackAnalysi
   const daytimePercent = ((daytimeCount / records.length) * 100).toFixed(0);
   const nighttimePercent = ((nighttimeCount / records.length) * 100).toFixed(0);
 
-  // 工作日 vs 周末
-  const weekdayCount = records.filter((r) => {
-    const day = getDay(parseISO(r.smoked_at));
-    return day !== 0 && day !== 6;
-  }).length;
-  const weekendCount = records.length - weekdayCount;
-  const weekdayPercent = ((weekdayCount / records.length) * 100).toFixed(0);
-  const weekendPercent = ((weekendCount / records.length) * 100).toFixed(0);
-
   // 最爱时段（抽烟最多的小时）
   const hourStats: Record<number, number> = {};
-  records.forEach((r) => {
+  records.forEach(r => {
     const hour = getHours(parseISO(r.smoked_at));
     hourStats[hour] = (hourStats[hour] || 0) + 1;
   });
@@ -141,7 +131,9 @@ export default function PackAnalysis({ pack, records, smokedCount }: PackAnalysi
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       {/* 统计卡片 */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
+      <Box
+        sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}
+      >
         {stats.map((stat, index) => (
           <Card
             key={index}
@@ -170,7 +162,13 @@ export default function PackAnalysis({ pack, records, smokedCount }: PackAnalysi
               >
                 {stat.icon}
               </Box>
-              <Typography variant="caption" color="text.secondary" fontWeight={500} display="block" gutterBottom>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={500}
+                display="block"
+                gutterBottom
+              >
                 {stat.title}
               </Typography>
               <Typography variant="h6" fontWeight={700} gutterBottom>
@@ -212,7 +210,15 @@ export default function PackAnalysis({ pack, records, smokedCount }: PackAnalysi
                   白天
                 </Typography>
               </Box>
-              <Box sx={{ position: 'relative', height: 40, borderRadius: 2, bgcolor: 'rgba(0, 0, 0, 0.04)', overflow: 'hidden' }}>
+              <Box
+                sx={{
+                  position: 'relative',
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  overflow: 'hidden',
+                }}
+              >
                 <Box
                   sx={{
                     position: 'absolute',
@@ -232,7 +238,11 @@ export default function PackAnalysis({ pack, records, smokedCount }: PackAnalysi
                   </Typography>
                 </Box>
               </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mt: 0.5, display: 'block' }}
+              >
                 {daytimeCount} 支
               </Typography>
             </Box>
@@ -245,7 +255,15 @@ export default function PackAnalysis({ pack, records, smokedCount }: PackAnalysi
                   晚上
                 </Typography>
               </Box>
-              <Box sx={{ position: 'relative', height: 40, borderRadius: 2, bgcolor: 'rgba(0, 0, 0, 0.04)', overflow: 'hidden' }}>
+              <Box
+                sx={{
+                  position: 'relative',
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  overflow: 'hidden',
+                }}
+              >
                 <Box
                   sx={{
                     position: 'absolute',
@@ -265,7 +283,11 @@ export default function PackAnalysis({ pack, records, smokedCount }: PackAnalysi
                   </Typography>
                 </Box>
               </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mt: 0.5, display: 'block' }}
+              >
                 {nighttimeCount} 支
               </Typography>
             </Box>

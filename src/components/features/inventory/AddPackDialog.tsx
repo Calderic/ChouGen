@@ -14,7 +14,11 @@ import {
   Chip,
   InputAdornment,
 } from '@mui/material';
-import { Close as CloseIcon, Recommend as RecommendIcon, SmokingRooms as SmokingIcon } from '@mui/icons-material';
+import {
+  Close as CloseIcon,
+  Recommend as RecommendIcon,
+  SmokingRooms as SmokingIcon,
+} from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 
 interface Pack {
@@ -40,7 +44,12 @@ interface PackFormData {
   purchase_date: string;
 }
 
-export default function AddPackDialog({ open, onClose, onSubmit, recentPacks }: AddPackDialogProps) {
+export default function AddPackDialog({
+  open,
+  onClose,
+  onSubmit,
+  recentPacks,
+}: AddPackDialogProps) {
   const [formData, setFormData] = useState<PackFormData>({
     name: '',
     brand: '',
@@ -66,7 +75,7 @@ export default function AddPackDialog({ open, onClose, onSubmit, recentPacks }: 
   // 模糊匹配逻辑
   useEffect(() => {
     if (nameInput.trim().length > 0) {
-      const matches = recentPacks.filter((pack) => {
+      const matches = recentPacks.filter(pack => {
         const fullName = `${pack.brand || ''} ${pack.name}`.toLowerCase();
         const input = nameInput.toLowerCase();
         return fullName.includes(input) || pack.name.toLowerCase().includes(input);
@@ -124,7 +133,7 @@ export default function AddPackDialog({ open, onClose, onSubmit, recentPacks }: 
     setMatchedPacks([]);
   };
 
-  const handleNameChange = (_: any, value: string) => {
+  const handleNameChange = (_event: React.SyntheticEvent, value: string) => {
     setNameInput(value);
     setFormData({ ...formData, name: value });
   };
@@ -184,7 +193,8 @@ export default function AddPackDialog({ open, onClose, onSubmit, recentPacks }: 
               </Typography>
               <Typography variant="body2">
                 {recommendedPack.brand && `${recommendedPack.brand} · `}
-                {recommendedPack.name} - ¥{recommendedPack.price.toFixed(2)} / {recommendedPack.total_count}支
+                {recommendedPack.name} - ¥{recommendedPack.price.toFixed(2)} /{' '}
+                {recommendedPack.total_count}支
               </Typography>
             </Alert>
           )}
@@ -195,7 +205,7 @@ export default function AddPackDialog({ open, onClose, onSubmit, recentPacks }: 
             <Autocomplete
               freeSolo
               options={matchedPacks}
-              getOptionLabel={(option) => {
+              getOptionLabel={option => {
                 if (typeof option === 'string') return option;
                 return `${option.brand ? option.brand + ' · ' : ''}${option.name}`;
               }}
@@ -223,7 +233,7 @@ export default function AddPackDialog({ open, onClose, onSubmit, recentPacks }: 
                   </Box>
                 );
               }}
-              renderInput={(params) => (
+              renderInput={params => (
                 <TextField
                   {...params}
                   label="香烟名称"
@@ -238,7 +248,7 @@ export default function AddPackDialog({ open, onClose, onSubmit, recentPacks }: 
             <TextField
               label="品牌"
               value={formData.brand}
-              onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+              onChange={e => setFormData({ ...formData, brand: e.target.value })}
               placeholder="例如：中华、玉溪"
             />
 
@@ -249,7 +259,9 @@ export default function AddPackDialog({ open, onClose, onSubmit, recentPacks }: 
                 type="number"
                 required
                 value={formData.total_count}
-                onChange={(e) => setFormData({ ...formData, total_count: parseInt(e.target.value) || 20 })}
+                onChange={e =>
+                  setFormData({ ...formData, total_count: parseInt(e.target.value) || 20 })
+                }
                 InputProps={{
                   endAdornment: <InputAdornment position="end">支</InputAdornment>,
                 }}
@@ -261,7 +273,7 @@ export default function AddPackDialog({ open, onClose, onSubmit, recentPacks }: 
                 type="number"
                 required
                 value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                 InputProps={{
                   startAdornment: <InputAdornment position="start">¥</InputAdornment>,
                 }}
@@ -275,7 +287,7 @@ export default function AddPackDialog({ open, onClose, onSubmit, recentPacks }: 
               type="date"
               required
               value={formData.purchase_date}
-              onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
+              onChange={e => setFormData({ ...formData, purchase_date: e.target.value })}
               InputLabelProps={{ shrink: true }}
             />
 

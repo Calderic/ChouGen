@@ -78,11 +78,9 @@ const mockUserDetail = {
   privacy_allow_encouragements: true,
 };
 
-const PageContainer = motion(Box);
-
 export default function LeaderboardPage() {
   const [period, setPeriod] = useState('week');
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [_selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const handlePeriodChange = (_: React.SyntheticEvent, newValue: string) => {
@@ -111,8 +109,8 @@ export default function LeaderboardPage() {
     <>
       <TopNavbar user={mockUser} />
 
-      <PageContainer
-        component="main"
+      <Box
+        component={motion.main}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -208,7 +206,7 @@ export default function LeaderboardPage() {
 
         {/* 我的排名（浮动在底部） */}
         <MyRanking ranking={mockMyRanking} />
-      </PageContainer>
+      </Box>
 
       <BottomNav />
 

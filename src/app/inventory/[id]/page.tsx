@@ -42,11 +42,9 @@ const mockSmokingRecords = [
   { id: '8', smoked_at: '2025-01-10T09:30:00Z', cost: 3.25 },
 ];
 
-const PageContainer = motion(Box);
-
 export default function PackDetailPage() {
   const router = useRouter();
-  const params = useParams();
+  const _params = useParams();
   const [tab, setTab] = useState(0);
 
   const handleBack = () => {
@@ -59,14 +57,14 @@ export default function PackDetailPage() {
 
   // 计算统计数据
   const smokedCount = mockPackDetail.total_count - mockPackDetail.remaining_count;
-  const isFinished = mockPackDetail.remaining_count === 0;
+  const _isFinished = mockPackDetail.remaining_count === 0;
 
   return (
     <>
       <TopNavbar user={mockUser} />
 
-      <PageContainer
-        component="main"
+      <Box
+        component={motion.main}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -160,7 +158,7 @@ export default function PackDetailPage() {
             )}
           </Box>
         </Container>
-      </PageContainer>
+      </Box>
 
       <BottomNav />
     </>

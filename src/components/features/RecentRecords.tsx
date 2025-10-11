@@ -30,8 +30,6 @@ interface RecentRecordsProps {
   onDelete?: (id: string) => void;
 }
 
-const RecordItem = motion(Paper);
-
 export default function RecentRecords({ records, onDelete }: RecentRecordsProps) {
   if (records.length === 0) {
     return (
@@ -96,9 +94,9 @@ export default function RecentRecords({ records, onDelete }: RecentRecordsProps)
             });
 
             return (
-              <RecordItem
+              <Paper
                 key={record.id}
-                component="div"
+                component={motion.div}
                 elevation={0}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -162,21 +160,35 @@ export default function RecentRecords({ records, onDelete }: RecentRecordsProps)
                       </Typography>
                     }
                     secondary={
-                      <Typography variant="caption" component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                        <Typography component="span" variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                      <Typography
+                        variant="caption"
+                        component="span"
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}
+                      >
+                        <Typography
+                          component="span"
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontWeight: 500 }}
+                        >
                           {timeAgo}
                         </Typography>
                         <Typography component="span" variant="caption" color="text.secondary">
                           •
                         </Typography>
-                        <Typography component="span" variant="caption" fontWeight="600" color="success.main">
+                        <Typography
+                          component="span"
+                          variant="caption"
+                          fontWeight="600"
+                          color="success.main"
+                        >
                           ¥{record.cost.toFixed(2)}
                         </Typography>
                       </Typography>
                     }
                   />
                 </ListItem>
-              </RecordItem>
+              </Paper>
             );
           })}
         </AnimatePresence>

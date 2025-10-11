@@ -1,6 +1,15 @@
 'use client';
 
-import { Box, Avatar, Typography, List, ListItem, ListItemAvatar, ListItemText, Chip, Paper } from '@mui/material';
+import {
+  Box,
+  Avatar,
+  Typography,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Paper,
+} from '@mui/material';
 import { SmokingRooms as SmokingIcon, LocalAtm as MoneyIcon } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
@@ -17,8 +26,6 @@ interface LeaderboardListProps {
   data: LeaderboardUser[];
   onUserClick?: (userId: string) => void;
 }
-
-const ListItemCard = motion(Paper);
 
 export default function LeaderboardList({ data, onUserClick }: LeaderboardListProps) {
   if (data.length === 0) {
@@ -48,9 +55,9 @@ export default function LeaderboardList({ data, onUserClick }: LeaderboardListPr
 
       <List sx={{ p: 0 }}>
         {data.map((user, index) => (
-          <ListItemCard
+          <Paper
             key={user.user_id}
-            component="div"
+            component={motion.div}
             elevation={0}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -146,7 +153,7 @@ export default function LeaderboardList({ data, onUserClick }: LeaderboardListPr
                 }
               />
             </ListItem>
-          </ListItemCard>
+          </Paper>
         ))}
       </List>
     </Box>

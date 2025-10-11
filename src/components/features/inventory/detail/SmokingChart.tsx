@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Typography, Card, CardContent } from '@mui/material';
-import { format, parseISO, startOfDay, differenceInHours } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
 interface SmokingRecord {
@@ -37,18 +37,21 @@ export default function SmokingChart({ records }: SmokingChartProps) {
   }
 
   // 按日期分组统计
-  const dailyStats = records.reduce((acc, record) => {
-    const date = format(parseISO(record.smoked_at), 'MM-dd', { locale: zhCN });
-    if (!acc[date]) {
-      acc[date] = { count: 0, cost: 0 };
-    }
-    acc[date].count += 1;
-    acc[date].cost += record.cost;
-    return acc;
-  }, {} as Record<string, { count: number; cost: number }>);
+  const dailyStats = records.reduce(
+    (acc, record) => {
+      const date = format(parseISO(record.smoked_at), 'MM-dd', { locale: zhCN });
+      if (!acc[date]) {
+        acc[date] = { count: 0, cost: 0 };
+      }
+      acc[date].count += 1;
+      acc[date].cost += record.cost;
+      return acc;
+    },
+    {} as Record<string, { count: number; cost: number }>
+  );
 
   const dates = Object.keys(dailyStats).reverse(); // 最早到最晚
-  const maxCount = Math.max(...Object.values(dailyStats).map((s) => s.count));
+  const maxCount = Math.max(...Object.values(dailyStats).map(s => s.count));
 
   // 按小时分组统计（24小时分布）
   const hourlyStats = Array.from({ length: 24 }, (_, i) => ({
@@ -56,12 +59,12 @@ export default function SmokingChart({ records }: SmokingChartProps) {
     count: 0,
   }));
 
-  records.forEach((record) => {
+  records.forEach(record => {
     const hour = parseISO(record.smoked_at).getHours();
     hourlyStats[hour].count += 1;
   });
 
-  const maxHourlyCount = Math.max(...hourlyStats.map((s) => s.count));
+  const maxHourlyCount = Math.max(...hourlyStats.map(s => s.count));
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -95,7 +98,7 @@ export default function SmokingChart({ records }: SmokingChartProps) {
               px: 2,
             }}
           >
-            {dates.map((date) => {
+            {dates.map(date => {
               const stat = dailyStats[date];
               const height = (stat.count / maxCount) * 100;
 
@@ -178,7 +181,7 @@ export default function SmokingChart({ records }: SmokingChartProps) {
               gap: 1,
             }}
           >
-            {hourlyStats.map((stat) => {
+            {hourlyStats.map(stat => {
               const intensity = maxHourlyCount > 0 ? stat.count / maxHourlyCount : 0;
               const opacity = intensity > 0 ? 0.3 + intensity * 0.7 : 0.1;
 
@@ -232,11 +235,13 @@ export default function SmokingChart({ records }: SmokingChartProps) {
           </Box>
 
           {/* 图例 */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mt: 2 }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mt: 2 }}
+          >
             <Typography variant="caption" color="text.secondary">
               低
             </Typography>
-            {[0.2, 0.4, 0.6, 0.8, 1.0].map((opacity) => (
+            {[0.2, 0.4, 0.6, 0.8, 1.0].map(opacity => (
               <Box
                 key={opacity}
                 sx={{

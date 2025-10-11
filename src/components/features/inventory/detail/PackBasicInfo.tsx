@@ -33,7 +33,11 @@ interface PackBasicInfoProps {
   records: SmokingRecord[];
 }
 
-export default function PackBasicInfo({ pack, smokedCount, records }: PackBasicInfoProps) {
+export default function PackBasicInfo({
+  pack,
+  smokedCount,
+  records: _records,
+}: PackBasicInfoProps) {
   const progress = (smokedCount / pack.total_count) * 100;
   const isFinished = pack.remaining_count === 0;
 
@@ -153,7 +157,11 @@ export default function PackBasicInfo({ pack, smokedCount, records }: PackBasicI
                 {isFinished ? '抽完日期' : '当前状态'}
               </Typography>
             </Box>
-            <Typography variant="body2" fontWeight={600} color={isFinished ? 'success.main' : 'text.primary'}>
+            <Typography
+              variant="body2"
+              fontWeight={600}
+              color={isFinished ? 'success.main' : 'text.primary'}
+            >
               {finishDateStr}
             </Typography>
           </Box>

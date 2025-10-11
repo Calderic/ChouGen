@@ -7,7 +7,6 @@ import {
   Avatar,
   Typography,
   IconButton,
-  Chip,
   Button,
   Divider,
   Stack,
@@ -45,7 +44,12 @@ interface UserDetailDialogProps {
   onEncourage?: (userId: string) => void;
 }
 
-export default function UserDetailDialog({ open, onClose, user, onEncourage }: UserDetailDialogProps) {
+export default function UserDetailDialog({
+  open,
+  onClose,
+  user,
+  onEncourage,
+}: UserDetailDialogProps) {
   if (!user) {
     return null;
   }

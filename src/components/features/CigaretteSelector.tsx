@@ -33,9 +33,13 @@ export default function CigaretteSelector({
   selectedPackId,
   onPackChange,
 }: CigaretteSelectorProps) {
-  const selectedPack = packs.find((p) => p.id === selectedPackId) || packs[0];
-  const pricePerStick = selectedPack ? (selectedPack.price / selectedPack.total_count).toFixed(2) : '0.00';
-  const progress = selectedPack ? (selectedPack.remaining_count / selectedPack.total_count) * 100 : 0;
+  const selectedPack = packs.find(p => p.id === selectedPackId) || packs[0];
+  const pricePerStick = selectedPack
+    ? (selectedPack.price / selectedPack.total_count).toFixed(2)
+    : '0.00';
+  const progress = selectedPack
+    ? (selectedPack.remaining_count / selectedPack.total_count) * 100
+    : 0;
 
   const handleChange = (event: SelectChangeEvent) => {
     onPackChange(event.target.value);
@@ -58,7 +62,7 @@ export default function CigaretteSelector({
             还没有口粮？
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            点击下方"管理口粮"添加你的第一包烟
+            点击下方&ldquo;管理口粮&rdquo;添加你的第一包烟
           </Typography>
         </CardContent>
       </Card>
@@ -110,7 +114,7 @@ export default function CigaretteSelector({
               },
             }}
           >
-            {packs.map((pack) => (
+            {packs.map(pack => (
               <MenuItem key={pack.id} value={pack.id}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <SmokingIcon fontSize="small" color="primary" />
@@ -182,7 +186,8 @@ export default function CigaretteSelector({
               bgcolor: 'rgba(0, 0, 0, 0.04)',
               '& .MuiLinearProgress-bar': {
                 borderRadius: 3,
-                bgcolor: progress > 30 ? 'primary.main' : progress > 10 ? 'warning.main' : 'error.main',
+                bgcolor:
+                  progress > 30 ? 'primary.main' : progress > 10 ? 'warning.main' : 'error.main',
               },
             }}
           />
