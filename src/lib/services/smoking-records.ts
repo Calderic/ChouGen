@@ -285,6 +285,26 @@ export async function getUserStats(userId?: string): Promise<{
 }
 
 /**
+ * 获取某个香烟包的所有抽烟记录
+ */
+export async function getPackRecords(packId: string): Promise<SmokingRecord[]> {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('smoking_records')
+    .select('*')
+    .eq('pack_id', packId)
+    .order('smoked_at', { ascending: false });
+
+  if (error) {
+    console.error('获取香烟包记录失败:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
  * 订阅抽烟记录变化（Realtime）
  */
 export function subscribeToRecords(

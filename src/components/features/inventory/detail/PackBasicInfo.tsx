@@ -13,7 +13,7 @@ import { zhCN } from 'date-fns/locale';
 interface Pack {
   id: string;
   name: string;
-  brand?: string;
+  brand: string | null;
   remaining_count: number;
   total_count: number;
   price: number;

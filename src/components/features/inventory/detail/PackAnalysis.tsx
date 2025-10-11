@@ -11,7 +11,7 @@ import { parseISO, differenceInMinutes, getHours } from 'date-fns';
 
 interface Pack {
   name: string;
-  brand?: string;
+  brand: string | null;
   total_count: number;
   price: number;
 }

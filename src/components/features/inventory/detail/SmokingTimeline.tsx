@@ -13,7 +13,7 @@ interface SmokingRecord {
 
 interface Pack {
   name: string;
-  brand?: string;
+  brand: string | null;
   total_count: number;
 }
 

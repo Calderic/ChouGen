@@ -1,9 +1,18 @@
 'use client';
 
-import { Container, Box, Typography, IconButton, Tabs, Tab } from '@mui/material';
+import {
+  Container,
+  Box,
+  Typography,
+  IconButton,
+  Tabs,
+  Tab,
+  CircularProgress,
+  Alert,
+} from '@mui/material';
 import { ArrowBack as BackIcon } from '@mui/icons-material';
 import { useRouter, useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import TopNavbar from '@/components/layout/TopNavbar';
 import BottomNav from '@/components/layout/BottomNav';
@@ -11,41 +20,54 @@ import PackBasicInfo from '@/components/features/inventory/detail/PackBasicInfo'
 import SmokingChart from '@/components/features/inventory/detail/SmokingChart';
 import SmokingTimeline from '@/components/features/inventory/detail/SmokingTimeline';
 import PackAnalysis from '@/components/features/inventory/detail/PackAnalysis';
-
-// 模拟数据
-const mockUser = {
-  username: '测试用户',
-  avatar_url: null,
-};
-
-const mockPackDetail = {
-  id: '1',
-  name: '中华（软）',
-  brand: '中华',
-  remaining_count: 12,
-  total_count: 20,
-  price: 65.0,
-  purchase_date: '2025-01-10',
-  finished_date: null, // 未抽完
-  photo_url: null,
-};
-
-// 模拟抽烟记录（时间倒序）
-const mockSmokingRecords = [
-  { id: '1', smoked_at: '2025-01-11T14:30:00Z', cost: 3.25 },
-  { id: '2', smoked_at: '2025-01-11T10:15:00Z', cost: 3.25 },
-  { id: '3', smoked_at: '2025-01-11T08:00:00Z', cost: 3.25 },
-  { id: '4', smoked_at: '2025-01-10T22:30:00Z', cost: 3.25 },
-  { id: '5', smoked_at: '2025-01-10T19:45:00Z', cost: 3.25 },
-  { id: '6', smoked_at: '2025-01-10T16:20:00Z', cost: 3.25 },
-  { id: '7', smoked_at: '2025-01-10T13:10:00Z', cost: 3.25 },
-  { id: '8', smoked_at: '2025-01-10T09:30:00Z', cost: 3.25 },
-];
+import { getCurrentUserProfile } from '@/lib/services/profile';
+import { getPackById } from '@/lib/services/cigarette-packs';
+import { getPackRecords } from '@/lib/services/smoking-records';
+import type { Profile, CigarettePack, SmokingRecord } from '@/types/database';
 
 export default function PackDetailPage() {
   const router = useRouter();
-  const _params = useParams();
+  const params = useParams();
+  const packId = params.id as string;
   const [tab, setTab] = useState(0);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [pack, setPack] = useState<CigarettePack | null>(null);
+  const [records, setRecords] = useState<SmokingRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [packId]);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const [profileData, packData, recordsData] = await Promise.all([
+        getCurrentUserProfile(),
+        getPackById(packId),
+        getPackRecords(packId),
+      ]);
+
+      if (!profileData) {
+        setError('无法加载用户资料');
+      } else if (!packData) {
+        setError('烟盒不存在');
+      } else {
+        setProfile(profileData);
+        setPack(packData);
+        setRecords(recordsData);
+      }
+    } catch (err) {
+      setError('加载数据失败');
+      console.error('加载烟盒详情失败:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleBack = () => {
     router.back();
@@ -55,13 +77,57 @@ export default function PackDetailPage() {
     setTab(newValue);
   };
 
+  // 加载中状态
+  if (loading) {
+    return (
+      <>
+        <TopNavbar user={null} />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+          }}
+        >
+          <CircularProgress />
+        </Box>
+        <BottomNav />
+      </>
+    );
+  }
+
+  // 错误状态
+  if (error || !profile || !pack) {
+    return (
+      <>
+        <TopNavbar user={profile} />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+            p: 3,
+          }}
+        >
+          <Alert severity="error" sx={{ maxWidth: 600 }}>
+            {error || '加载失败'}
+          </Alert>
+        </Box>
+        <BottomNav />
+      </>
+    );
+  }
+
   // 计算统计数据
-  const smokedCount = mockPackDetail.total_count - mockPackDetail.remaining_count;
-  const _isFinished = mockPackDetail.remaining_count === 0;
+  const smokedCount = pack.total_count - pack.remaining_count;
 
   return (
     <>
-      <TopNavbar user={mockUser} />
+      <TopNavbar user={profile} />
 
       <Box
         component={motion.main}
@@ -92,11 +158,7 @@ export default function PackDetailPage() {
           </Box>
 
           {/* 基本信息 */}
-          <PackBasicInfo
-            pack={mockPackDetail}
-            smokedCount={smokedCount}
-            records={mockSmokingRecords}
-          />
+          <PackBasicInfo pack={pack} smokedCount={smokedCount} records={records} />
 
           {/* 标签页 */}
           <Tabs
@@ -147,15 +209,9 @@ export default function PackDetailPage() {
 
           {/* 内容区 */}
           <Box sx={{ minHeight: 400 }}>
-            {tab === 0 && <SmokingChart records={mockSmokingRecords} />}
-            {tab === 1 && <SmokingTimeline records={mockSmokingRecords} pack={mockPackDetail} />}
-            {tab === 2 && (
-              <PackAnalysis
-                pack={mockPackDetail}
-                records={mockSmokingRecords}
-                smokedCount={smokedCount}
-              />
-            )}
+            {tab === 0 && <SmokingChart records={records} />}
+            {tab === 1 && <SmokingTimeline records={records} pack={pack} />}
+            {tab === 2 && <PackAnalysis pack={pack} records={records} smokedCount={smokedCount} />}
           </Box>
         </Container>
       </Box>
