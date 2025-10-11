@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { subscribeToAchievements, getAllAchievements } from '@/lib/services/achievements';
 import AchievementNotification from '@/components/features/achievements/AchievementNotification';
 import type { UserAchievement, Achievement } from '@/types/database';
@@ -37,17 +36,15 @@ export default function AchievementProvider({ children }: AchievementProviderPro
 
   // 获取当前用户 ID 和成就列表
   useEffect(() => {
-    const supabase = createClient();
-
-    // 获取用户 ID
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUserId(user.id);
-      }
-    });
+    // 获取用户 ID 通过 Next API（避免在客户端直连 Supabase）
+    fetch('/api/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.id) setUserId(data.id as string);
+      })
+      .catch(() => {});
 
     // 延迟加载成就定义（不阻塞首屏）
-    // 使用 requestIdleCallback 在浏览器空闲时加载
     const loadAchievements = () => {
       getAllAchievements().then(achievements => {
         const map = new Map<string, Achievement>();
@@ -59,9 +56,9 @@ export default function AchievementProvider({ children }: AchievementProviderPro
     };
 
     if ('requestIdleCallback' in window) {
+      // @ts-expect-error - requestIdleCallback is not in TypeScript's lib.dom.d.ts
       requestIdleCallback(loadAchievements);
     } else {
-      // 降级方案：延迟 2 秒加载
       setTimeout(loadAchievements, 2000);
     }
   }, []);

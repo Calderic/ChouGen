@@ -10,7 +10,7 @@ import BottomNav from '@/components/layout/BottomNav';
 import ProfileCard from '@/components/features/profile/ProfileCard';
 import Achievements from '@/components/features/profile/Achievements';
 import PrivacySettings from '@/components/features/profile/PrivacySettings';
-import { updateProfile } from '@/lib/services/client/profile';
+import { updateProfile, updatePrivacySettings } from '@/lib/services/client/profile';
 import type { Profile, AchievementWithStatus } from '@/types/database';
 
 // 动态导入编辑对话框（只在用户点击编辑按钮时加载）
@@ -64,29 +64,11 @@ export function ProfileClient({ initialData }: ProfileClientProps) {
     privacy_allow_view_packs: boolean;
     privacy_allow_encouragements: boolean;
   }) => {
-    // 隐私设置需要通过自定义的方式更新，因为 updateProfile 只接受基本字段
-    const supabase = (await import('@/lib/supabase/client')).createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      alert('未登录');
-      return;
-    }
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        ...settings,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', user.id);
-
-    if (error) {
-      alert(error.message || '更新失败');
-    } else {
+    const result = await updatePrivacySettings(settings);
+    if (result.success) {
       router.refresh();
+    } else {
+      alert(result.error || '更新失败');
     }
   };
 

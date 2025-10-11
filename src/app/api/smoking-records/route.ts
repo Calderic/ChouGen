@@ -1,27 +1,30 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/api/auth';
+import { handleApiError, ApiErrors } from '@/lib/api/error-handler';
 
-// POST /api/smoking-records  创建抽烟记录（服务端执行，避免在客户端直连 Supabase）
+/**
+ * @api POST /api/smoking-records
+ * @description 创建抽烟记录
+ *
+ * @body {string} packId - 香烟包 ID（必填）
+ * @body {string} [smokedAt] - 抽烟时间 ISO 格式（可选，默认当前时间）
+ *
+ * @returns {Object} response
+ * @returns {boolean} response.success - 操作是否成功
+ * @returns {Object} response.data - 创建的抽烟记录对象
+ *
+ * @throws {401} 未登录
+ * @throws {400} 缺少 packId 或香烟包已抽完
+ * @throws {404} 香烟包不存在
+ * @throws {500} 服务器错误
+ */
 export async function POST(req: Request) {
   try {
+    const { user, supabase } = await requireAuth();
     const { packId, smokedAt } = (await req.json()) as { packId?: string; smokedAt?: string };
 
     if (!packId) {
-      return NextResponse.json({ error: '缺少 packId' }, { status: 400 });
-    }
-
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError) {
-      return NextResponse.json({ error: userError.message }, { status: 500 });
-    }
-    if (!user) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 });
+      throw ApiErrors.badRequest('缺少 packId');
     }
 
     // 读包信息用于计算成本与校验库存
@@ -32,10 +35,11 @@ export async function POST(req: Request) {
       .single();
 
     if (packError || !pack) {
-      return NextResponse.json({ error: '香烟包不存在' }, { status: 404 });
+      throw ApiErrors.notFound('香烟包不存在');
     }
+
     if (pack.remaining_count <= 0) {
-      return NextResponse.json({ error: '香烟包已抽完' }, { status: 400 });
+      throw ApiErrors.badRequest('香烟包已抽完');
     }
 
     const costPerCigarette = pack.price / pack.total_count;
@@ -53,12 +57,12 @@ export async function POST(req: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('[API /api/smoking-records POST] 数据库错误:', error);
+      throw ApiErrors.internal('创建记录失败');
     }
 
     return NextResponse.json({ success: true, data });
   } catch (e) {
-    const error = e instanceof Error ? e.message : '服务器错误';
-    return NextResponse.json({ error }, { status: 500 });
+    return handleApiError(e, '/api/smoking-records POST');
   }
 }
