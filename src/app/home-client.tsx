@@ -1,18 +1,38 @@
 'use client';
 
-import { Container, Box, Button, Stack, Alert } from '@mui/material';
+import { Container, Box, Button, Stack, Alert, Skeleton } from '@mui/material';
 import { Add as AddIcon, Inventory as InventoryIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import TopNavbar from '@/components/layout/TopNavbar';
 import BottomNav from '@/components/layout/BottomNav';
 import CigaretteSelector from '@/components/features/CigaretteSelector';
-import TodayStats from '@/components/features/TodayStats';
-import RecentRecords from '@/components/features/RecentRecords';
 import { createSmokingRecord, deleteSmokingRecord } from '@/lib/services/client/smoking-records';
 import type { Profile, CigarettePack } from '@/types/database';
 import type { SmokingRecordWithPack } from '@/lib/services/smoking-records';
+
+// 动态导入非关键组件（优先展示选择器和记录按钮）
+const TodayStats = dynamic(() => import('@/components/features/TodayStats'), {
+  loading: () => (
+    <Box sx={{ p: 3 }}>
+      <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 3 }} />
+    </Box>
+  ),
+});
+
+const RecentRecords = dynamic(() => import('@/components/features/RecentRecords'), {
+  loading: () => (
+    <Box sx={{ p: 3 }}>
+      <Skeleton variant="text" width={120} height={32} sx={{ mb: 2 }} />
+      <Stack spacing={1}>
+        <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2 }} />
+        <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 2 }} />
+      </Stack>
+    </Box>
+  ),
+});
 
 interface HomeClientProps {
   initialData: {

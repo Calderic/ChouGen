@@ -4,18 +4,27 @@ import { Container, Box, Typography, Tabs, Tab } from '@mui/material';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import TopNavbar from '@/components/layout/TopNavbar';
 import BottomNav from '@/components/layout/BottomNav';
 import TopThree from '@/components/features/leaderboard/TopThree';
 import LeaderboardList from '@/components/features/leaderboard/LeaderboardList';
 import MyRanking from '@/components/features/leaderboard/MyRanking';
-import UserDetailDialog from '@/components/features/leaderboard/UserDetailDialog';
 import {
   getUserDetail,
   sendEncouragement,
   type UserDetail,
 } from '@/lib/services/client/leaderboard';
 import type { Profile, LeaderboardEntry } from '@/types/database';
+
+// 动态导入用户详情对话框（只在用户点击时加载）
+const UserDetailDialog = dynamic(
+  () => import('@/components/features/leaderboard/UserDetailDialog'),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+);
 
 type LeaderboardPeriod = 'day' | 'week' | 'month' | 'all';
 

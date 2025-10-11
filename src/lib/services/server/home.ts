@@ -1,11 +1,13 @@
+import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import type { Profile, CigarettePack } from '@/types/database';
 import type { SmokingRecordWithPack } from '@/lib/services/smoking-records';
 
 /**
  * 首页数据获取（服务端）
+ * 使用 React cache() 在同一个请求中复用数据
  */
-export async function getHomePageData() {
+export const getHomePageData = cache(async () => {
   const supabase = await createClient();
 
   // 获取当前用户
@@ -78,4 +80,4 @@ export async function getHomePageData() {
           month: { count: 0, cost: 0 },
         },
   };
-}
+});
