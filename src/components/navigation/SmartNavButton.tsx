@@ -1,11 +1,10 @@
 'use client';
 
-import { Button, type ButtonProps } from '@mui/material';
-import Link from 'next/link';
+import { Button, type ButtonProps as MuiButtonProps } from '@mui/material';
 import { useRouter, usePathname } from 'next/navigation';
-import { useTransition, useState, useEffect } from 'react';
+import { useTransition, useState, useEffect, type MouseEventHandler } from 'react';
 
-interface SmartNavButtonProps extends Omit<ButtonProps, 'onClick'> {
+interface SmartNavButtonProps extends Omit<MuiButtonProps<'a'>, 'onClick'> {
   href: string;
   prefetch?: boolean;
 }
@@ -33,7 +32,7 @@ export function SmartNavButton({ href, prefetch = true, children, ...props }: Sm
   };
 
   // 导航函数（仅拦截左键非修饰键点击）
-  const handleClick: React.MouseEventHandler<HTMLButtonElement> = e => {
+  const handleClick: MouseEventHandler<HTMLAnchorElement> = e => {
     if (isActive) return;
     // 允许中键/修饰键保持默认新开行为
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -51,7 +50,7 @@ export function SmartNavButton({ href, prefetch = true, children, ...props }: Sm
   return (
     <Button
       {...props}
-      component={Link}
+      component="a"
       href={href}
       aria-current={isActive ? 'page' : undefined}
       onClick={handleClick}
