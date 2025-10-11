@@ -1,6 +1,6 @@
 'use client';
 
-import { AppBar, Toolbar, Avatar, IconButton, Typography, Button, Stack } from '@mui/material';
+import { AppBar, Toolbar, Avatar, IconButton, Typography, Stack } from '@mui/material';
 import {
   Home as HomeIcon,
   Inventory as InventoryIcon,
@@ -10,6 +10,7 @@ import {
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useUser } from '@/components/providers/UserProvider';
+import { SmartNavButton } from '@/components/navigation/SmartNavButton';
 
 const navItems = [
   { label: '首页', value: '/', icon: <HomeIcon /> },
@@ -59,10 +60,10 @@ export default function TopNavbar() {
           }}
         >
           {navItems.map(item => (
-            <Button
+            <SmartNavButton
               key={item.value}
+              href={item.value}
               startIcon={item.icon}
-              onClick={() => router.push(item.value)}
               sx={{
                 color: pathname === item.value ? 'primary.main' : 'text.secondary',
                 bgcolor: pathname === item.value ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
@@ -77,13 +78,23 @@ export default function TopNavbar() {
               }}
             >
               {item.label}
-            </Button>
+            </SmartNavButton>
           ))}
         </Stack>
 
         {/* 右侧：用户头像 */}
         <IconButton
-          onClick={() => router.push('/profile')}
+          onClick={() => {
+            if (pathname !== '/profile') {
+              router.push('/profile');
+            }
+          }}
+          onMouseEnter={() => {
+            // 悬停时预加载个人资料页
+            if (pathname !== '/profile') {
+              router.prefetch('/profile');
+            }
+          }}
           sx={{
             p: 0,
           }}
