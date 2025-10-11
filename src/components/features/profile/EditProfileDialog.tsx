@@ -102,11 +102,15 @@ export default function EditProfileDialog({
       }}
     >
       <DialogTitle
-        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 2 }}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          pb: 2,
+          fontWeight: 700,
+        }}
       >
-        <Typography variant="h6" fontWeight={700}>
-          编辑资料
-        </Typography>
+        编辑资料
         <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
