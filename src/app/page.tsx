@@ -1,78 +1,177 @@
 'use client';
 
-import { Container, Box, Button, Stack } from '@mui/material';
+import { Container, Box, Button, Stack, CircularProgress, Alert } from '@mui/material';
 import { Add as AddIcon, Inventory as InventoryIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import TopNavbar from '@/components/layout/TopNavbar';
 import BottomNav from '@/components/layout/BottomNav';
 import CigaretteSelector from '@/components/features/CigaretteSelector';
 import TodayStats from '@/components/features/TodayStats';
 import RecentRecords from '@/components/features/RecentRecords';
-
-// 模拟数据（后续替换为真实数据）
-const mockUser = {
-  username: '测试用户',
-  avatar_url: null,
-};
-
-const mockPacks = [
-  {
-    id: '1',
-    name: '中华（软）',
-    brand: '中华',
-    remaining_count: 12,
-    total_count: 20,
-    price: 65.0,
-  },
-  {
-    id: '2',
-    name: '玉溪',
-    brand: '玉溪',
-    remaining_count: 18,
-    total_count: 20,
-    price: 25.0,
-  },
-];
-
-const mockRecords = [
-  {
-    id: '1',
-    smoked_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30分钟前
-    cost: 3.25,
-    pack: { name: '中华（软）', brand: '中华' },
-  },
-  {
-    id: '2',
-    smoked_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2小时前
-    cost: 3.25,
-    pack: { name: '中华（软）', brand: '中华' },
-  },
-  {
-    id: '3',
-    smoked_at: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(), // 4小时前
-    cost: 1.25,
-    pack: { name: '玉溪', brand: '玉溪' },
-  },
-];
+import { getCurrentUserProfile } from '@/lib/services/profile';
+import { getActivePacks } from '@/lib/services/cigarette-packs';
+import {
+  getTodayRecords,
+  getUserStats,
+  createSmokingRecord,
+  deleteSmokingRecord,
+} from '@/lib/services/smoking-records';
+import type { Profile, CigarettePack } from '@/types/database';
+import type { SmokingRecordWithPack } from '@/lib/services/smoking-records';
 
 export default function HomePage() {
   const router = useRouter();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [activePacks, setActivePacks] = useState<CigarettePack[]>([]);
+  const [selectedPackId, setSelectedPackId] = useState<string>('');
+  const [todayRecords, setTodayRecords] = useState<SmokingRecordWithPack[]>([]);
+  const [stats, setStats] = useState({
+    today: { count: 0, cost: 0 },
+    week: { count: 0, cost: 0 },
+    month: { count: 0, cost: 0 },
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 加载数据
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // 并行加载所有数据
+      const [profileData, packsData, recordsData, statsData] = await Promise.all([
+        getCurrentUserProfile(),
+        getActivePacks(),
+        getTodayRecords(),
+        getUserStats(),
+      ]);
+
+      if (!profileData) {
+        setError('无法加载用户资料');
+      } else {
+        setProfile(profileData);
+        setActivePacks(packsData);
+        setTodayRecords(recordsData);
+        setStats(statsData);
+
+        // 自动选择第一个香烟包
+        if (packsData.length > 0 && !selectedPackId) {
+          setSelectedPackId(packsData[0].id);
+        }
+      }
+    } catch (err) {
+      setError('加载数据失败');
+      console.error('加载数据失败:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handlePackChange = (packId: string) => {
-    console.log('Selected pack:', packId);
-    // TODO: 更新状态
+    setSelectedPackId(packId);
   };
 
-  const handleRecordDelete = (id: string) => {
-    console.log('Delete record:', id);
-    // TODO: 删除记录
+  const handleRecordSmoke = async () => {
+    if (!selectedPackId) {
+      alert('请先选择香烟包');
+      return;
+    }
+
+    const result = await createSmokingRecord(selectedPackId);
+
+    if (result.success) {
+      // 刷新数据
+      const [packsData, recordsData, statsData] = await Promise.all([
+        getActivePacks(),
+        getTodayRecords(),
+        getUserStats(),
+      ]);
+      setActivePacks(packsData);
+      setTodayRecords(recordsData);
+      setStats(statsData);
+    } else {
+      alert(result.error || '记录失败');
+    }
   };
+
+  const handleRecordDelete = async (id: string) => {
+    if (!confirm('确定要删除这条记录吗？')) {
+      return;
+    }
+
+    const result = await deleteSmokingRecord(id);
+
+    if (result.success) {
+      // 刷新数据
+      const [packsData, recordsData, statsData] = await Promise.all([
+        getActivePacks(),
+        getTodayRecords(),
+        getUserStats(),
+      ]);
+      setActivePacks(packsData);
+      setTodayRecords(recordsData);
+      setStats(statsData);
+    } else {
+      alert(result.error || '删除失败');
+    }
+  };
+
+  // 加载中状态
+  if (loading) {
+    return (
+      <>
+        <TopNavbar user={null} />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+          }}
+        >
+          <CircularProgress />
+        </Box>
+        <BottomNav />
+      </>
+    );
+  }
+
+  // 错误状态
+  if (error || !profile) {
+    return (
+      <>
+        <TopNavbar user={null} />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+            p: 3,
+          }}
+        >
+          <Alert severity="error" sx={{ maxWidth: 600 }}>
+            {error || '加载失败'}
+          </Alert>
+        </Box>
+        <BottomNav />
+      </>
+    );
+  }
 
   return (
     <>
       {/* 顶部导航 */}
-      <TopNavbar user={mockUser} />
+      <TopNavbar user={profile} />
 
       {/* 主内容区 */}
       <Box
@@ -91,11 +190,20 @@ export default function HomePage() {
         <Container maxWidth="sm" sx={{ py: 4 }}>
           <Stack spacing={4}>
             {/* 香烟选择器 */}
-            <CigaretteSelector
-              packs={mockPacks}
-              selectedPackId={mockPacks[0].id}
-              onPackChange={handlePackChange}
-            />
+            {activePacks.length > 0 ? (
+              <CigaretteSelector
+                packs={activePacks}
+                selectedPackId={selectedPackId}
+                onPackChange={handlePackChange}
+              />
+            ) : (
+              <Alert severity="info">
+                没有可用的香烟包，请先
+                <Button size="small" onClick={() => router.push('/inventory')}>
+                  添加口粮
+                </Button>
+              </Alert>
+            )}
 
             {/* 长按抽烟按钮 */}
             <Box
@@ -108,6 +216,7 @@ export default function HomePage() {
               }}
             >
               <Box
+                onClick={handleRecordSmoke}
                 sx={{
                   width: 180,
                   height: 180,
@@ -120,9 +229,10 @@ export default function HomePage() {
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
                   border: '1px solid rgba(255, 255, 255, 0.3)',
                   transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                  cursor: 'pointer',
+                  cursor: activePacks.length > 0 ? 'pointer' : 'not-allowed',
+                  opacity: activePacks.length > 0 ? 1 : 0.5,
                   '&:active': {
-                    transform: 'scale(0.96)',
+                    transform: activePacks.length > 0 ? 'scale(0.96)' : 'none',
                     boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
                   },
                 }}
@@ -130,7 +240,7 @@ export default function HomePage() {
                 <Box sx={{ textAlign: 'center' }}>
                   <AddIcon sx={{ fontSize: 56, color: 'primary.main', mb: 1 }} />
                   <Box sx={{ typography: 'body2', color: 'text.primary', fontWeight: 500 }}>
-                    长按记录
+                    点击记录
                   </Box>
                   <Box sx={{ typography: 'caption', color: 'text.secondary', mt: 0.5 }}>抽一支</Box>
                 </Box>
@@ -161,10 +271,15 @@ export default function HomePage() {
             </Box>
 
             {/* 今日统计 */}
-            <TodayStats todayCount={5} todayCost={16.25} weekCount={28} monthCount={142} />
+            <TodayStats
+              todayCount={stats.today.count}
+              todayCost={stats.today.cost}
+              weekCount={stats.week.count}
+              monthCount={stats.month.count}
+            />
 
             {/* 最近记录 */}
-            <RecentRecords records={mockRecords} onDelete={handleRecordDelete} />
+            <RecentRecords records={todayRecords} onDelete={handleRecordDelete} />
           </Stack>
         </Container>
       </Box>
