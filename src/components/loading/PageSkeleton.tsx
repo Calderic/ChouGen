@@ -5,7 +5,7 @@ import { Container, Box, Stack, Skeleton } from '@mui/material';
  */
 export function HomePageSkeleton() {
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
+    <Container maxWidth="sm" sx={{ py: 4 }} role="status" aria-busy="true" aria-live="polite">
       <Stack spacing={4}>
         {/* 香烟选择器 */}
         <Skeleton variant="rectangular" height={100} sx={{ borderRadius: 3 }} />
@@ -45,7 +45,13 @@ export function HomePageSkeleton() {
  */
 export function LeaderboardPageSkeleton() {
   return (
-    <Container maxWidth="md" sx={{ py: 4, pb: { xs: 16, md: 4 } }}>
+    <Container
+      maxWidth="md"
+      sx={{ py: 4, pb: { xs: 16, md: 4 } }}
+      role="status"
+      aria-busy="true"
+      aria-live="polite"
+    >
       <Stack spacing={4}>
         {/* 标题 */}
         <Skeleton variant="text" width={160} height={40} sx={{ mx: 'auto', borderRadius: 1 }} />
@@ -90,7 +96,7 @@ export function LeaderboardPageSkeleton() {
  */
 export function InventoryPageSkeleton() {
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Container maxWidth="md" sx={{ py: 4 }} role="status" aria-busy="true" aria-live="polite">
       <Stack spacing={3}>
         {/* 标题和添加按钮 */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -120,7 +126,13 @@ export function InventoryPageSkeleton() {
  */
 export function StatisticsPageSkeleton() {
   return (
-    <Container maxWidth="md" sx={{ py: 4, pb: { xs: 10, md: 4 } }}>
+    <Container
+      maxWidth="md"
+      sx={{ py: 4, pb: { xs: 10, md: 4 } }}
+      role="status"
+      aria-busy="true"
+      aria-live="polite"
+    >
       <Stack spacing={4}>
         {/* 数据概览 */}
         <Stack direction="row" spacing={2}>
@@ -159,7 +171,7 @@ export function StatisticsPageSkeleton() {
  */
 export function ProfilePageSkeleton() {
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
+    <Container maxWidth="sm" sx={{ py: 4 }} role="status" aria-busy="true" aria-live="polite">
       <Stack spacing={4} alignItems="center">
         {/* 头像 */}
         <Skeleton variant="circular" width={120} height={120} />

@@ -1,6 +1,7 @@
 'use client';
 
 import { Button, type ButtonProps } from '@mui/material';
+import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTransition, useState, useEffect } from 'react';
 
@@ -11,9 +12,9 @@ interface SmartNavButtonProps extends Omit<ButtonProps, 'onClick'> {
 
 /**
  * 智能导航按钮
- * - 悬停预加载
- * - 点击时使用 startTransition 保持 UI 响应
- * - 防抖优化
+ * - 悬停/聚焦预加载
+ * - 左键点击时使用 startTransition 保持 UI 响应
+ * - 保留中键/修饰键的原生新开行为
  */
 export function SmartNavButton({ href, prefetch = true, children, ...props }: SmartNavButtonProps) {
   const router = useRouter();
@@ -31,13 +32,15 @@ export function SmartNavButton({ href, prefetch = true, children, ...props }: Sm
     }
   };
 
-  // 导航函数
-  const handleClick = () => {
-    if (!isActive) {
-      startTransition(() => {
-        router.push(href);
-      });
-    }
+  // 导航函数（仅拦截左键非修饰键点击）
+  const handleClick: React.MouseEventHandler<HTMLButtonElement> = e => {
+    if (isActive) return;
+    // 允许中键/修饰键保持默认新开行为
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    startTransition(() => {
+      router.push(href);
+    });
   };
 
   // 当路径变化时重置预加载状态
@@ -48,9 +51,13 @@ export function SmartNavButton({ href, prefetch = true, children, ...props }: Sm
   return (
     <Button
       {...props}
+      component={Link}
+      href={href}
+      aria-current={isActive ? 'page' : undefined}
       onClick={handleClick}
       onMouseEnter={handlePrefetch}
-      onTouchStart={handlePrefetch} // 移动端支持
+      onFocus={handlePrefetch}
+      onTouchStart={handlePrefetch}
       disabled={isPending || props.disabled}
       sx={{
         opacity: isPending ? 0.7 : 1,

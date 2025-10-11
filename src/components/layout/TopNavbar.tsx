@@ -84,13 +84,16 @@ export default function TopNavbar() {
 
         {/* 右侧：用户头像 */}
         <IconButton
-          onClick={() => {
-            if (pathname !== '/profile') {
-              router.push('/profile');
-            }
-          }}
+          component={Link}
+          href="/profile"
+          aria-label="打开个人资料"
           onMouseEnter={() => {
             // 悬停时预加载个人资料页
+            if (pathname !== '/profile') {
+              router.prefetch('/profile');
+            }
+          }}
+          onFocus={() => {
             if (pathname !== '/profile') {
               router.prefetch('/profile');
             }
