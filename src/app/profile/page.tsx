@@ -1,7 +1,7 @@
 'use client';
 
-import { Container, Box, Stack } from '@mui/material';
-import { useState } from 'react';
+import { Container, Box, Stack, CircularProgress, Alert } from '@mui/material';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import TopNavbar from '@/components/layout/TopNavbar';
 import BottomNav from '@/components/layout/BottomNav';
@@ -9,37 +9,46 @@ import ProfileCard from '@/components/features/profile/ProfileCard';
 import Achievements from '@/components/features/profile/Achievements';
 import PrivacySettings from '@/components/features/profile/PrivacySettings';
 import EditProfileDialog from '@/components/features/profile/EditProfileDialog';
-
-// 模拟数据
-const mockUser = {
-  id: 'user-1',
-  username: '测试用户',
-  avatar_url: null as string | null,
-  bio: '每天少一支，健康多一点' as string | null,
-  status: 'controlling' as 'quitting' | 'controlling' | 'observing',
-  created_at: '2024-12-01T00:00:00Z',
-};
-
-const mockPrivacySettings = {
-  privacy_show_in_leaderboard: true,
-  privacy_allow_view_packs: false,
-  privacy_allow_encouragements: true,
-};
-
-const mockAchievements = [
-  { id: 'first_smoke', unlocked: true, unlocked_at: '2024-12-01T08:30:00Z' },
-  { id: 'week_warrior', unlocked: true, unlocked_at: '2024-12-08T00:00:00Z' },
-  { id: 'month_master', unlocked: true, unlocked_at: '2025-01-01T00:00:00Z' },
-  { id: 'cost_conscious', unlocked: true, unlocked_at: '2025-01-05T14:20:00Z' },
-  { id: 'quit_attempt', unlocked: false },
-  { id: 'speed_demon', unlocked: true, unlocked_at: '2024-12-15T16:45:00Z' },
-  { id: 'zen_master', unlocked: false },
-];
+import {
+  getCurrentUserProfile,
+  updateUserProfile,
+  updatePrivacySettings,
+} from '@/lib/services/profile';
+import { getUserAchievements } from '@/lib/services/achievements';
+import type { Profile, AchievementWithStatus } from '@/types/database';
 
 export default function ProfilePage() {
-  const [user, setUser] = useState(mockUser);
-  const [privacySettings, setPrivacySettings] = useState(mockPrivacySettings);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [achievements, setAchievements] = useState<AchievementWithStatus[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  // 加载用户资料和成就
+  useEffect(() => {
+    loadProfile();
+    loadAchievements();
+  }, []);
+
+  const loadProfile = async () => {
+    setLoading(true);
+    setError(null);
+
+    const data = await getCurrentUserProfile();
+
+    if (!data) {
+      setError('无法加载用户资料');
+    } else {
+      setProfile(data);
+    }
+
+    setLoading(false);
+  };
+
+  const loadAchievements = async () => {
+    const data = await getUserAchievements();
+    setAchievements(data);
+  };
 
   const handleEditClick = () => {
     setEditDialogOpen(true);
@@ -49,21 +58,90 @@ export default function ProfilePage() {
     setEditDialogOpen(false);
   };
 
-  const handleUpdateProfile = async (updates: Partial<typeof mockUser>) => {
-    console.log('更新资料:', updates);
-    // TODO: 调用 Supabase API 更新资料
-    setUser({ ...user, ...updates });
+  const handleUpdateProfile = async (updates: Partial<Profile>) => {
+    if (!profile) return;
+
+    const result = await updateUserProfile({
+      username: updates.username,
+      avatar_url: updates.avatar_url,
+      bio: updates.bio,
+      status: updates.status,
+    });
+
+    if (result.success) {
+      // 更新本地状态
+      setProfile({ ...profile, ...updates });
+      setEditDialogOpen(false);
+    } else {
+      alert(result.error || '更新失败');
+    }
   };
 
-  const handlePrivacyChange = (settings: typeof mockPrivacySettings) => {
-    console.log('更新隐私设置:', settings);
-    // TODO: 调用 Supabase API 更新隐私设置
-    setPrivacySettings(settings);
+  const handlePrivacyChange = async (settings: {
+    privacy_show_in_leaderboard: boolean;
+    privacy_allow_view_packs: boolean;
+    privacy_allow_encouragements: boolean;
+  }) => {
+    if (!profile) return;
+
+    const result = await updatePrivacySettings(settings);
+
+    if (result.success) {
+      // 更新本地状态
+      setProfile({ ...profile, ...settings });
+    } else {
+      alert(result.error || '更新失败');
+    }
   };
+
+  // 加载中状态
+  if (loading) {
+    return (
+      <>
+        <TopNavbar user={null} />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+          }}
+        >
+          <CircularProgress />
+        </Box>
+        <BottomNav />
+      </>
+    );
+  }
+
+  // 错误状态
+  if (error || !profile) {
+    return (
+      <>
+        <TopNavbar user={null} />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+            p: 3,
+          }}
+        >
+          <Alert severity="error" sx={{ maxWidth: 600 }}>
+            {error || '用户资料加载失败'}
+          </Alert>
+        </Box>
+        <BottomNav />
+      </>
+    );
+  }
 
   return (
     <>
-      <TopNavbar user={user} />
+      <TopNavbar user={profile} />
 
       <Box
         component={motion.main}
@@ -81,13 +159,30 @@ export default function ProfilePage() {
         <Container maxWidth="md" sx={{ py: 4 }}>
           <Stack spacing={4}>
             {/* 个人信息卡片 */}
-            <ProfileCard user={user} onEdit={handleEditClick} />
+            <ProfileCard
+              user={{
+                id: profile.id,
+                username: profile.username,
+                avatar_url: profile.avatar_url,
+                bio: profile.bio,
+                status: profile.status,
+                created_at: profile.created_at,
+              }}
+              onEdit={handleEditClick}
+            />
 
             {/* 成就徽章 */}
-            <Achievements achievements={mockAchievements} />
+            <Achievements achievements={achievements} />
 
             {/* 隐私设置 */}
-            <PrivacySettings settings={privacySettings} onChange={handlePrivacyChange} />
+            <PrivacySettings
+              settings={{
+                privacy_show_in_leaderboard: profile.privacy_show_in_leaderboard,
+                privacy_allow_view_packs: profile.privacy_allow_view_packs,
+                privacy_allow_encouragements: profile.privacy_allow_encouragements,
+              }}
+              onChange={handlePrivacyChange}
+            />
           </Stack>
         </Container>
       </Box>
@@ -98,7 +193,13 @@ export default function ProfilePage() {
       <EditProfileDialog
         open={editDialogOpen}
         onClose={handleEditDialogClose}
-        user={user}
+        user={{
+          id: profile.id,
+          username: profile.username,
+          avatar_url: profile.avatar_url,
+          bio: profile.bio,
+          status: profile.status,
+        }}
         onUpdate={handleUpdateProfile}
       />
     </>
