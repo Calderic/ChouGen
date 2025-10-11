@@ -61,6 +61,14 @@ export async function signUp(formData: { email: string; password: string; userna
 }
 
 /**
+ * 校验重定向路径是否安全(防开放重定向攻击)
+ */
+function isSafeRedirect(path: string): boolean {
+  // 只允许站内相对路径,不允许协议相对路径(//)和外部 URL
+  return path.startsWith('/') && !path.startsWith('//');
+}
+
+/**
  * 邮箱密码登录
  */
 export async function signIn(formData: { email: string; password: string; redirect?: string }) {
@@ -75,8 +83,9 @@ export async function signIn(formData: { email: string; password: string; redire
     return { error: error.message };
   }
 
-  // 登录成功后跳转到原始路径或首页
-  redirect(formData.redirect || '/');
+  // 登录成功后跳转到原始路径或首页(安全校验)
+  const safePath = formData.redirect && isSafeRedirect(formData.redirect) ? formData.redirect : '/';
+  redirect(safePath);
 }
 
 /**

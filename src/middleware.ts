@@ -1,13 +1,12 @@
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
  * Next.js Middleware - 路由保护和身份验证
  */
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  // ⚠️ 重要: 缓存 Supabase 要设置的 Cookie,避免重定向时丢失
+  const cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }> = [];
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,25 +16,32 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
+        // 仅缓存 Cookie,不立即写入响应
+        setAll(cookies) {
+          cookies.forEach(c => cookiesToSet.push(c));
         },
       },
     }
   );
+
+  // 统一应用 Cookie 到响应对象
+  const applyCookies = (res: NextResponse) => {
+    cookiesToSet.forEach(({ name, value, options }) => res.cookies.set(name, value, options));
+    return res;
+  };
 
   // 刷新 session（如果存在）
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
+
+  // ⚠️ 优先处理: 已登录用户访问认证页面,直接跳转首页
+  if (user && pathname.startsWith('/auth')) {
+    const redirectUrl = new URL('/', request.url);
+    return applyCookies(NextResponse.redirect(redirectUrl));
+  }
 
   // 公开路径（不需要登录）
   const publicPaths = ['/auth/login', '/auth/register', '/api/auth'];
@@ -43,25 +49,20 @@ export async function middleware(request: NextRequest) {
 
   // 如果是公开路径，直接放行
   if (isPublicPath) {
-    return supabaseResponse;
+    return applyCookies(NextResponse.next({ request }));
   }
 
   // 如果未登录且访问受保护页面，跳转到登录页
   if (!user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = '/auth/login';
-    redirectUrl.searchParams.set('redirect', pathname); // 记录原始访问路径
-    return NextResponse.redirect(redirectUrl);
+    // 保留完整路径(包括 query 参数)
+    const redirectFrom = `${pathname}${search}`;
+    redirectUrl.searchParams.set('redirect', redirectFrom);
+    return applyCookies(NextResponse.redirect(redirectUrl));
   }
 
-  // 已登录且访问登录页，跳转到首页
-  if (user && pathname === '/auth/login') {
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = '/';
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  return supabaseResponse;
+  return applyCookies(NextResponse.next({ request }));
 }
 
 /**
