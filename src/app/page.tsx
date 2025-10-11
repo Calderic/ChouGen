@@ -56,8 +56,6 @@ const mockRecords = [
   },
 ];
 
-const PageContainer = motion(Box);
-
 export default function HomePage() {
   const router = useRouter();
 
@@ -77,8 +75,8 @@ export default function HomePage() {
       <TopNavbar user={mockUser} />
 
       {/* 主内容区 */}
-      <PageContainer
-        component="main"
+      <Box
+        component={motion.main}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -134,9 +132,7 @@ export default function HomePage() {
                   <Box sx={{ typography: 'body2', color: 'text.primary', fontWeight: 500 }}>
                     长按记录
                   </Box>
-                  <Box sx={{ typography: 'caption', color: 'text.secondary', mt: 0.5 }}>
-                    抽一支
-                  </Box>
+                  <Box sx={{ typography: 'caption', color: 'text.secondary', mt: 0.5 }}>抽一支</Box>
                 </Box>
               </Box>
 
@@ -171,7 +167,7 @@ export default function HomePage() {
             <RecentRecords records={mockRecords} onDelete={handleRecordDelete} />
           </Stack>
         </Container>
-      </PageContainer>
+      </Box>
 
       {/* 底部导航（仅移动端） */}
       <BottomNav />

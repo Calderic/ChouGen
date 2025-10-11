@@ -41,5 +41,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# cache
+.eslintcache
+node_modules/.cache/
+
 # 开发日志
 /docs
