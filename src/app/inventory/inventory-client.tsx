@@ -4,10 +4,7 @@ import { Container, Box, Typography, Fab, Tabs, Tab } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
-import TopNavbar from '@/components/layout/TopNavbar';
-import BottomNav from '@/components/layout/BottomNav';
 import ActivePacksList from '@/components/features/inventory/ActivePacksList';
 import EmptyPacksList from '@/components/features/inventory/EmptyPacksList';
 import { createPack, deletePack } from '@/lib/services/client/cigarette-packs';
@@ -79,98 +76,78 @@ export function InventoryClient({ initialData }: InventoryClientProps) {
   const recentPacks = initialData.emptyPacks.slice(0, 5);
 
   return (
-    <>
-      <TopNavbar user={initialData.profile} />
-
-      <Box
-        component={motion.main}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
+    <Container maxWidth="md" sx={{ py: 4, pb: { xs: 10, md: 4 }, position: 'relative' }}>
+      {/* 标题 */}
+      <Typography
+        variant="h5"
+        fontWeight={700}
+        gutterBottom
         sx={{
-          flexGrow: 1,
-          pb: { xs: 10, md: 4 },
-          minHeight: '100vh',
-          bgcolor: 'background.default',
-          position: 'relative',
+          textAlign: 'center',
+          mb: 3,
         }}
       >
-        <Container maxWidth="md" sx={{ py: 4 }}>
-          {/* 标题 */}
-          <Typography
-            variant="h5"
-            fontWeight={700}
-            gutterBottom
-            sx={{
-              textAlign: 'center',
-              mb: 3,
-            }}
-          >
-            口粮仓库
-          </Typography>
+        口粮仓库
+      </Typography>
 
-          {/* 标签页 */}
-          <Tabs
-            value={tab}
-            onChange={handleTabChange}
-            centered
-            sx={{
-              mb: 3,
-              '& .MuiTabs-indicator': {
-                bgcolor: 'primary.main',
-                height: 3,
-                borderRadius: 1.5,
-              },
-            }}
-          >
-            <Tab
-              label={`当前口粮 (${initialData.activePacks.length})`}
-              sx={{
-                fontWeight: 600,
-                minWidth: 120,
-                '&.Mui-selected': {
-                  color: 'primary.main',
-                },
-              }}
-            />
-            <Tab
-              label={`已抽完 (${initialData.emptyPacks.length})`}
-              sx={{
-                fontWeight: 600,
-                minWidth: 120,
-                '&.Mui-selected': {
-                  color: 'primary.main',
-                },
-              }}
-            />
-          </Tabs>
-
-          {/* 内容区 */}
-          <Box sx={{ minHeight: 400 }}>
-            {tab === 0 ? (
-              <ActivePacksList data={initialData.activePacks} onDelete={handleDeletePack} />
-            ) : (
-              <EmptyPacksList data={initialData.emptyPacks} onDelete={handleDeletePack} />
-            )}
-          </Box>
-        </Container>
-
-        {/* 添加按钮 */}
-        <Fab
-          color="primary"
-          onClick={handleAddClick}
+      {/* 标签页 */}
+      <Tabs
+        value={tab}
+        onChange={handleTabChange}
+        centered
+        sx={{
+          mb: 3,
+          '& .MuiTabs-indicator': {
+            bgcolor: 'primary.main',
+            height: 3,
+            borderRadius: 1.5,
+          },
+        }}
+      >
+        <Tab
+          label={`当前口粮 (${initialData.activePacks.length})`}
           sx={{
-            position: 'fixed',
-            bottom: { xs: 104, md: 32 },
-            right: 32,
-            boxShadow: '0 8px 24px rgba(37, 99, 235, 0.3)',
+            fontWeight: 600,
+            minWidth: 120,
+            '&.Mui-selected': {
+              color: 'primary.main',
+            },
           }}
-        >
-          <AddIcon />
-        </Fab>
+        />
+        <Tab
+          label={`已抽完 (${initialData.emptyPacks.length})`}
+          sx={{
+            fontWeight: 600,
+            minWidth: 120,
+            '&.Mui-selected': {
+              color: 'primary.main',
+            },
+          }}
+        />
+      </Tabs>
+
+      {/* 内容区 */}
+      <Box sx={{ minHeight: 400 }}>
+        {tab === 0 ? (
+          <ActivePacksList data={initialData.activePacks} onDelete={handleDeletePack} />
+        ) : (
+          <EmptyPacksList data={initialData.emptyPacks} onDelete={handleDeletePack} />
+        )}
       </Box>
 
-      <BottomNav />
+      {/* 添加按钮 */}
+      <Fab
+        color="primary"
+        onClick={handleAddClick}
+        sx={{
+          position: 'fixed',
+          bottom: { xs: 104, md: 32 },
+          right: 32,
+          boxShadow: '0 8px 24px rgba(37, 99, 235, 0.3)',
+        }}
+      >
+        <AddIcon />
+      </Fab>
 
       {/* 添加香烟弹窗 */}
       <AddPackDialog
@@ -179,6 +156,6 @@ export function InventoryClient({ initialData }: InventoryClientProps) {
         onSubmit={handleAddPack}
         recentPacks={recentPacks}
       />
-    </>
+    </Container>
   );
 }

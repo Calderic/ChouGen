@@ -9,13 +9,7 @@ import {
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-
-interface TopNavbarProps {
-  user?: {
-    username: string;
-    avatar_url?: string | null;
-  } | null;
-}
+import { useUser } from '@/components/providers/UserProvider';
 
 const navItems = [
   { label: '首页', value: '/', icon: <HomeIcon /> },
@@ -24,9 +18,10 @@ const navItems = [
   { label: '统计分析', value: '/statistics', icon: <BarChartIcon /> },
 ];
 
-export default function TopNavbar({ user }: TopNavbarProps) {
+export default function TopNavbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { user } = useUser();
 
   return (
     <AppBar
@@ -63,7 +58,7 @@ export default function TopNavbar({ user }: TopNavbarProps) {
             justifyContent: 'center',
           }}
         >
-          {navItems.map((item) => (
+          {navItems.map(item => (
             <Button
               key={item.value}
               startIcon={item.icon}
@@ -76,7 +71,8 @@ export default function TopNavbar({ user }: TopNavbarProps) {
                 py: 1,
                 borderRadius: 2,
                 '&:hover': {
-                  bgcolor: pathname === item.value ? 'rgba(37, 99, 235, 0.12)' : 'rgba(0, 0, 0, 0.04)',
+                  bgcolor:
+                    pathname === item.value ? 'rgba(37, 99, 235, 0.12)' : 'rgba(0, 0, 0, 0.04)',
                 },
               }}
             >

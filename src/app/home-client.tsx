@@ -4,10 +4,7 @@ import { Container, Box, Button, Stack, Alert, Skeleton } from '@mui/material';
 import { Add as AddIcon, Inventory as InventoryIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
-import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
-import TopNavbar from '@/components/layout/TopNavbar';
-import BottomNav from '@/components/layout/BottomNav';
 import CigaretteSelector from '@/components/features/CigaretteSelector';
 import { createSmokingRecord, deleteSmokingRecord } from '@/lib/services/client/smoking-records';
 import type { Profile, CigarettePack } from '@/types/database';
@@ -73,11 +70,6 @@ export function HomeClient({ initialData }: HomeClientProps) {
     // selectedPackId 是受控的，不需要作为依赖
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData]);
-
-  // 预取常去的页面，提升跳转速度
-  useEffect(() => {
-    router.prefetch('/inventory');
-  }, [router]);
 
   const handleRecordSmoke = async () => {
     if (!selectedPackId) {
@@ -215,125 +207,102 @@ export function HomeClient({ initialData }: HomeClientProps) {
   };
 
   return (
-    <>
-      {/* 顶部导航 */}
-      <TopNavbar user={initialData.profile} />
+    <Container maxWidth="sm" sx={{ py: 4 }}>
+      <Stack spacing={4}>
+        {/* 香烟选择器 */}
+        {initialData.activePacks.length > 0 ? (
+          <CigaretteSelector
+            packs={activePacks}
+            selectedPackId={selectedPackId}
+            onPackChange={setSelectedPackId}
+          />
+        ) : (
+          <Alert severity="info">
+            没有可用的香烟包，请先
+            <Button size="small" onClick={() => router.push('/inventory')}>
+              添加口粮
+            </Button>
+          </Alert>
+        )}
 
-      {/* 主内容区 */}
-      <Box
-        component={motion.main}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        sx={{
-          flexGrow: 1,
-          pb: { xs: 10, md: 4 },
-          minHeight: '100vh',
-          bgcolor: 'background.default',
-          position: 'relative',
-        }}
-      >
-        <Container maxWidth="sm" sx={{ py: 4 }}>
-          <Stack spacing={4}>
-            {/* 香烟选择器 */}
-            {initialData.activePacks.length > 0 ? (
-              <CigaretteSelector
-                packs={activePacks}
-                selectedPackId={selectedPackId}
-                onPackChange={setSelectedPackId}
+        {/* 长按抽烟按钮 */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 3,
+            py: 5,
+          }}
+        >
+          <Box
+            onClick={isSaving ? undefined : handleRecordSmoke}
+            sx={{
+              width: 180,
+              height: 180,
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'rgba(255, 255, 255, 0.8)',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              cursor: activePacks.length > 0 && !isSaving ? 'pointer' : 'not-allowed',
+              opacity: activePacks.length > 0 ? 1 : 0.5,
+              '&:active': {
+                transform: activePacks.length > 0 ? 'scale(0.96)' : 'none',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+              },
+            }}
+          >
+            <Box sx={{ textAlign: 'center' }}>
+              <AddIcon
+                sx={{ fontSize: 56, color: isSaving ? 'text.disabled' : 'primary.main', mb: 1 }}
               />
-            ) : (
-              <Alert severity="info">
-                没有可用的香烟包，请先
-                <Button size="small" onClick={() => router.push('/inventory')}>
-                  添加口粮
-                </Button>
-              </Alert>
-            )}
-
-            {/* 长按抽烟按钮 */}
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 3,
-                py: 5,
-              }}
-            >
-              <Box
-                onClick={isSaving ? undefined : handleRecordSmoke}
-                sx={{
-                  width: 180,
-                  height: 180,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  bgcolor: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(20px)',
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                  cursor: activePacks.length > 0 && !isSaving ? 'pointer' : 'not-allowed',
-                  opacity: activePacks.length > 0 ? 1 : 0.5,
-                  '&:active': {
-                    transform: activePacks.length > 0 ? 'scale(0.96)' : 'none',
-                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
-                  },
-                }}
-              >
-                <Box sx={{ textAlign: 'center' }}>
-                  <AddIcon
-                    sx={{ fontSize: 56, color: isSaving ? 'text.disabled' : 'primary.main', mb: 1 }}
-                  />
-                  <Box sx={{ typography: 'body2', color: 'text.primary', fontWeight: 500 }}>
-                    {isSaving ? '记录中…' : '点击记录'}
-                  </Box>
-                  <Box sx={{ typography: 'caption', color: 'text.secondary', mt: 0.5 }}>抽一支</Box>
-                </Box>
+              <Box sx={{ typography: 'body2', color: 'text.primary', fontWeight: 500 }}>
+                {isSaving ? '记录中…' : '点击记录'}
               </Box>
-
-              {/* 快捷按钮 */}
-              <Button
-                variant="outlined"
-                startIcon={<InventoryIcon />}
-                onClick={() => router.push('/inventory')}
-                sx={{
-                  borderRadius: 3,
-                  px: 4,
-                  py: 1.5,
-                  borderColor: 'divider',
-                  color: 'text.primary',
-                  bgcolor: 'rgba(255, 255, 255, 0.6)',
-                  backdropFilter: 'blur(10px)',
-                  fontWeight: 500,
-                  '&:hover': {
-                    borderColor: 'primary.main',
-                    bgcolor: 'rgba(255, 255, 255, 0.8)',
-                  },
-                }}
-              >
-                管理口粮
-              </Button>
+              <Box sx={{ typography: 'caption', color: 'text.secondary', mt: 0.5 }}>抽一支</Box>
             </Box>
+          </Box>
 
-            {/* 今日统计 */}
-            <TodayStats
-              todayCount={stats.today.count}
-              todayCost={stats.today.cost}
-              weekCount={stats.week.count}
-              monthCount={stats.month.count}
-            />
+          {/* 快捷按钮 */}
+          <Button
+            variant="outlined"
+            startIcon={<InventoryIcon />}
+            onClick={() => router.push('/inventory')}
+            sx={{
+              borderRadius: 3,
+              px: 4,
+              py: 1.5,
+              borderColor: 'divider',
+              color: 'text.primary',
+              bgcolor: 'rgba(255, 255, 255, 0.6)',
+              backdropFilter: 'blur(10px)',
+              fontWeight: 500,
+              '&:hover': {
+                borderColor: 'primary.main',
+                bgcolor: 'rgba(255, 255, 255, 0.8)',
+              },
+            }}
+          >
+            管理口粮
+          </Button>
+        </Box>
 
-            {/* 最近记录 */}
-            <RecentRecords records={records} onDelete={handleRecordDelete} />
-          </Stack>
-        </Container>
-      </Box>
+        {/* 今日统计 */}
+        <TodayStats
+          todayCount={stats.today.count}
+          todayCost={stats.today.cost}
+          weekCount={stats.week.count}
+          monthCount={stats.month.count}
+        />
 
-      {/* 底部导航（仅移动端） */}
-      <BottomNav />
-    </>
+        {/* 最近记录 */}
+        <RecentRecords records={records} onDelete={handleRecordDelete} />
+      </Stack>
+    </Container>
   );
 }
