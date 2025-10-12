@@ -2,12 +2,9 @@
 
 import { Container, Box, Stack, Tabs, Tab, Skeleton } from '@mui/material';
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import dynamic from 'next/dynamic';
-import TopNavbar from '@/components/layout/TopNavbar';
-import BottomNav from '@/components/layout/BottomNav';
 import StatsOverview from '@/components/features/statistics/StatsOverview';
 import type { Profile } from '@/types/database';
 
@@ -95,75 +92,55 @@ export function StatisticsClient({ initialData }: StatisticsClientProps) {
   const chartData = getFilteredChartData();
 
   return (
-    <>
-      <TopNavbar user={initialData.profile} />
+    <Container maxWidth="md" sx={{ py: 4, pb: { xs: 10, md: 4 } }}>
+      <Stack spacing={4}>
+        {/* 数据概览 */}
+        <StatsOverview stats={initialData.stats} />
 
-      <Box
-        component={motion.main}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        sx={{
-          flexGrow: 1,
-          pb: { xs: 10, md: 4 },
-          minHeight: '100vh',
-          bgcolor: 'background.default',
-          position: 'relative',
-        }}
-      >
-        <Container maxWidth="md" sx={{ py: 4 }}>
-          <Stack spacing={4}>
-            {/* 数据概览 */}
-            <StatsOverview stats={initialData.stats} />
+        {/* 趋势图表 */}
+        <Box>
+          <Tabs
+            value={timePeriod}
+            onChange={handleTimePeriodChange}
+            sx={{
+              mb: 2,
+              '& .MuiTabs-indicator': {
+                bgcolor: 'primary.main',
+                height: 3,
+                borderRadius: 1.5,
+              },
+            }}
+          >
+            <Tab
+              label="最近7天"
+              value="week"
+              sx={{
+                fontWeight: 600,
+                '&.Mui-selected': {
+                  color: 'primary.main',
+                },
+              }}
+            />
+            <Tab
+              label="最近30天"
+              value="month"
+              sx={{
+                fontWeight: 600,
+                '&.Mui-selected': {
+                  color: 'primary.main',
+                },
+              }}
+            />
+          </Tabs>
+          <TrendChart data={chartData} period={timePeriod} />
+        </Box>
 
-            {/* 趋势图表 */}
-            <Box>
-              <Tabs
-                value={timePeriod}
-                onChange={handleTimePeriodChange}
-                sx={{
-                  mb: 2,
-                  '& .MuiTabs-indicator': {
-                    bgcolor: 'primary.main',
-                    height: 3,
-                    borderRadius: 1.5,
-                  },
-                }}
-              >
-                <Tab
-                  label="最近7天"
-                  value="week"
-                  sx={{
-                    fontWeight: 600,
-                    '&.Mui-selected': {
-                      color: 'primary.main',
-                    },
-                  }}
-                />
-                <Tab
-                  label="最近30天"
-                  value="month"
-                  sx={{
-                    fontWeight: 600,
-                    '&.Mui-selected': {
-                      color: 'primary.main',
-                    },
-                  }}
-                />
-              </Tabs>
-              <TrendChart data={chartData} period={timePeriod} />
-            </Box>
+        {/* 时段分布 */}
+        <HourlyDistribution data={initialData.hourlyData} />
 
-            {/* 时段分布 */}
-            <HourlyDistribution data={initialData.hourlyData} />
-
-            {/* 健康影响 */}
-            <HealthImpact data={initialData.healthData} />
-          </Stack>
-        </Container>
-      </Box>
-
-      <BottomNav />
-    </>
+        {/* 健康影响 */}
+        <HealthImpact data={initialData.healthData} />
+      </Stack>
+    </Container>
   );
 }

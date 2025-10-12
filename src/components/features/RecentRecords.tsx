@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { Delete as DeleteIcon, SmokingRooms as SmokingIcon } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePageTransition } from '@/components/layout/PageTransitionContext';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
@@ -31,6 +32,7 @@ interface RecentRecordsProps {
 }
 
 export default function RecentRecords({ records, onDelete }: RecentRecordsProps) {
+  const { suppressInitialMotion } = usePageTransition();
   if (records.length === 0) {
     return (
       <Box>
@@ -98,10 +100,10 @@ export default function RecentRecords({ records, onDelete }: RecentRecordsProps)
                 key={record.id}
                 component={motion.div}
                 elevation={0}
-                initial={{ opacity: 0, x: -20 }}
+                initial={suppressInitialMotion ? false : { opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                transition={{ delay: index * 0.05 }}
+                transition={{ delay: suppressInitialMotion ? 0 : index * 0.05 }}
                 sx={{
                   bgcolor: 'rgba(255, 255, 255, 0.6)',
                   backdropFilter: 'blur(10px)',

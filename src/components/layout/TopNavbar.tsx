@@ -1,6 +1,6 @@
 'use client';
 
-import { AppBar, Toolbar, Avatar, IconButton, Typography, Button, Stack } from '@mui/material';
+import { AppBar, Toolbar, Avatar, IconButton, Typography, Stack } from '@mui/material';
 import {
   Home as HomeIcon,
   Inventory as InventoryIcon,
@@ -8,14 +8,11 @@ import {
   EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
+import { type MouseEventHandler } from 'react';
+import { useNavigationStore } from '@/lib/stores/navigation';
 import { useRouter, usePathname } from 'next/navigation';
-
-interface TopNavbarProps {
-  user?: {
-    username: string;
-    avatar_url?: string | null;
-  } | null;
-}
+import { useUser } from '@/components/providers/UserProvider';
+import { SmartNavButton } from '@/components/navigation/SmartNavButton';
 
 const navItems = [
   { label: '首页', value: '/', icon: <HomeIcon /> },
@@ -24,9 +21,11 @@ const navItems = [
   { label: '统计分析', value: '/statistics', icon: <BarChartIcon /> },
 ];
 
-export default function TopNavbar({ user }: TopNavbarProps) {
+export default function TopNavbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { user } = useUser();
+  const startNav = useNavigationStore(s => s.start);
 
   return (
     <AppBar
@@ -63,11 +62,11 @@ export default function TopNavbar({ user }: TopNavbarProps) {
             justifyContent: 'center',
           }}
         >
-          {navItems.map((item) => (
-            <Button
+          {navItems.map(item => (
+            <SmartNavButton
               key={item.value}
+              href={item.value}
               startIcon={item.icon}
-              onClick={() => router.push(item.value)}
               sx={{
                 color: pathname === item.value ? 'primary.main' : 'text.secondary',
                 bgcolor: pathname === item.value ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
@@ -76,18 +75,40 @@ export default function TopNavbar({ user }: TopNavbarProps) {
                 py: 1,
                 borderRadius: 2,
                 '&:hover': {
-                  bgcolor: pathname === item.value ? 'rgba(37, 99, 235, 0.12)' : 'rgba(0, 0, 0, 0.04)',
+                  bgcolor:
+                    pathname === item.value ? 'rgba(37, 99, 235, 0.12)' : 'rgba(0, 0, 0, 0.04)',
                 },
               }}
             >
               {item.label}
-            </Button>
+            </SmartNavButton>
           ))}
         </Stack>
 
         {/* 右侧：用户头像 */}
         <IconButton
-          onClick={() => router.push('/profile')}
+          component={Link}
+          href="/profile"
+          aria-label="打开个人资料"
+          onClick={
+            (e => {
+              // 仅左键且无修饰键时触发，并避免重复导航
+              if (pathname === '/profile') return;
+              if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+              startNav();
+            }) as MouseEventHandler<HTMLAnchorElement>
+          }
+          onMouseEnter={() => {
+            // 悬停时预加载个人资料页
+            if (pathname !== '/profile') {
+              router.prefetch('/profile');
+            }
+          }}
+          onFocus={() => {
+            if (pathname !== '/profile') {
+              router.prefetch('/profile');
+            }
+          }}
           sx={{
             p: 0,
           }}

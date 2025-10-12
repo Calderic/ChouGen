@@ -7,6 +7,7 @@ import {
   TrendingUp as TrendIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { usePageTransition } from '@/components/layout/PageTransitionContext';
 
 interface TodayStatsProps {
   todayCount: number;
@@ -23,6 +24,7 @@ export default function TodayStats({
   weekCount,
   monthCount: _monthCount,
 }: TodayStatsProps) {
+  const { suppressInitialMotion } = usePageTransition();
   const stats = [
     {
       label: '今日已抽',
@@ -66,9 +68,9 @@ export default function TodayStats({
           <Grid size={{ xs: 4 }} key={stat.label}>
             <StatCard
               elevation={0}
-              initial={{ opacity: 0, y: 20 }}
+              initial={suppressInitialMotion ? false : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: suppressInitialMotion ? 0 : index * 0.1 }}
               sx={{
                 bgcolor: 'rgba(255, 255, 255, 0.6)',
                 backdropFilter: 'blur(10px)',
