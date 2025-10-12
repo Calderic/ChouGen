@@ -51,14 +51,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
           position: 'relative',
         }}
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="sync">
           <motion.div
             key={pathname} // 路由变化时触发动画
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-            style={{ height: '100%' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            style={{ height: '100%', willChange: 'opacity' }}
           >
             {children}
           </motion.div>
