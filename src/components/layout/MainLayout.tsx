@@ -2,7 +2,6 @@
 
 import { Box } from '@mui/material';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import TopNavbar from './TopNavbar';
 import BottomNav from './BottomNav';
 import NavigationPrefetch from './NavigationPrefetch';
@@ -49,21 +48,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
           flexGrow: 1,
           pb: { xs: 10, md: 4 }, // 底部留空给移动端导航
           minHeight: isAuthPage ? '100vh' : 'auto',
-          position: 'relative',
         }}
       >
-        <AnimatePresence mode="sync">
-          <motion.div
-            key={pathname} // 路由变化时触发动画
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
-            style={{ height: '100%', willChange: 'opacity' }}
-          >
-            <PageTransitionProvider>{children}</PageTransitionProvider>
-          </motion.div>
-        </AnimatePresence>
+        <PageTransitionProvider>{children}</PageTransitionProvider>
       </Box>
 
       {/* 底部导航 - 仅移动端，不在认证页显示 */}
