@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import TopNavbar from './TopNavbar';
 import BottomNav from './BottomNav';
 import NavigationPrefetch from './NavigationPrefetch';
+import { PageTransitionProvider } from './PageTransitionContext';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -60,7 +61,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             transition={{ duration: 0.18, ease: 'easeOut' }}
             style={{ height: '100%', willChange: 'opacity' }}
           >
-            {children}
+            <PageTransitionProvider>{children}</PageTransitionProvider>
           </motion.div>
         </AnimatePresence>
       </Box>

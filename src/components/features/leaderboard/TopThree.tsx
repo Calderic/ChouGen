@@ -3,6 +3,7 @@
 import { Box, Avatar, Typography, Stack } from '@mui/material';
 import { EmojiEvents as TrophyIcon, Whatshot as FireIcon } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { usePageTransition } from '@/components/layout/PageTransitionContext';
 
 interface LeaderboardUser {
   user_id: string;
@@ -21,6 +22,7 @@ interface TopThreeProps {
 const PodiumCard = motion(Box);
 
 export default function TopThree({ data, onUserClick }: TopThreeProps) {
+  const { suppressInitialMotion } = usePageTransition();
   if (data.length === 0) {
     return null;
   }
@@ -91,9 +93,9 @@ export default function TopThree({ data, onUserClick }: TopThreeProps) {
           return (
             <PodiumCard
               key={user.user_id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={suppressInitialMotion ? false : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.15 }}
+              transition={{ delay: suppressInitialMotion ? 0 : index * 0.15 }}
               onClick={() => !isPlaceholder && onUserClick?.(user.user_id)}
               sx={{
                 position: 'relative',

@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { SmokingRooms as SmokingIcon, LocalAtm as MoneyIcon } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { usePageTransition } from '@/components/layout/PageTransitionContext';
 
 interface LeaderboardUser {
   user_id: string;
@@ -28,6 +29,7 @@ interface LeaderboardListProps {
 }
 
 export default function LeaderboardList({ data, onUserClick }: LeaderboardListProps) {
+  const { suppressInitialMotion } = usePageTransition();
   if (data.length === 0) {
     return (
       <Box
@@ -59,9 +61,9 @@ export default function LeaderboardList({ data, onUserClick }: LeaderboardListPr
             key={user.user_id}
             component={motion.div}
             elevation={0}
-            initial={{ opacity: 0, x: -20 }}
+            initial={suppressInitialMotion ? false : { opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.05 }}
+            transition={{ delay: suppressInitialMotion ? 0 : index * 0.05 }}
             onClick={() => onUserClick?.(user.user_id)}
             sx={{
               bgcolor: 'rgba(255, 255, 255, 0.6)',

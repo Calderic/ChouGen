@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
+import { usePageTransition } from '@/components/layout/PageTransitionContext';
 
 interface Pack {
   id: string;
@@ -31,6 +32,7 @@ const PackCard = motion(Card);
 
 export default function EmptyPacksList({ data, onDelete }: EmptyPacksListProps) {
   const router = useRouter();
+  const { suppressInitialMotion } = usePageTransition();
 
   const handlePackClick = (packId: string) => {
     router.push(`/inventory/${packId}`);
@@ -68,10 +70,10 @@ export default function EmptyPacksList({ data, onDelete }: EmptyPacksListProps) 
             <PackCard
               key={pack.id}
               elevation={0}
-              initial={{ opacity: 0, y: 20 }}
+              initial={suppressInitialMotion ? false : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              transition={{ delay: index * 0.05 }}
+              transition={{ delay: suppressInitialMotion ? 0 : index * 0.05 }}
               onClick={() => handlePackClick(pack.id)}
               sx={{
                 bgcolor: 'rgba(255, 255, 255, 0.5)',
