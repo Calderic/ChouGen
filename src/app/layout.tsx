@@ -4,6 +4,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import AchievementProvider from '@/components/providers/AchievementProvider';
 import { UserProvider } from '@/components/providers/UserProvider';
 import { NavigationTransition } from '@/components/navigation/NavigationTransition';
+import { NavigationLifecycle } from '@/components/navigation/NavigationLifecycle';
 import { getCurrentUser } from '@/lib/services/server/user';
 import './globals.css';
 
@@ -40,6 +41,7 @@ export default async function RootLayout({
           <UserProvider user={user}>
             <AchievementProvider>
               <NavigationTransition />
+              <NavigationLifecycle />
               <MainLayout>{children}</MainLayout>
             </AchievementProvider>
           </UserProvider>

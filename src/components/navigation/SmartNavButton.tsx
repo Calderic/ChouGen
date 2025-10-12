@@ -3,6 +3,7 @@
 import { Button, type ButtonProps as MuiButtonProps } from '@mui/material';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTransition, useState, useEffect, type MouseEventHandler } from 'react';
+import { useNavigationStore } from '@/lib/stores/navigation';
 
 interface SmartNavButtonProps extends Omit<MuiButtonProps<'a'>, 'onClick'> {
   href: string;
@@ -20,6 +21,7 @@ export function SmartNavButton({ href, prefetch = true, children, ...props }: Sm
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
   const [hasPrefetched, setHasPrefetched] = useState(false);
+  const startNav = useNavigationStore(s => s.start);
 
   const isActive = pathname === href;
 
@@ -37,6 +39,7 @@ export function SmartNavButton({ href, prefetch = true, children, ...props }: Sm
     // 允许中键/修饰键保持默认新开行为
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
+    startNav();
     startTransition(() => {
       router.push(href);
     });

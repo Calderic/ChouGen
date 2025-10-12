@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getHomePageData } from '@/lib/services/server/home';
-import { HomeClient } from './home-client';
+import { HomeClient } from '@/app/home-client';
 
 export default async function HomePage() {
   // 服务端直接获取数据

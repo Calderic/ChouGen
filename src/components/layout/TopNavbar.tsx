@@ -8,6 +8,8 @@ import {
   EmojiEvents as TrophyIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
+import { type MouseEventHandler } from 'react';
+import { useNavigationStore } from '@/lib/stores/navigation';
 import { useRouter, usePathname } from 'next/navigation';
 import { useUser } from '@/components/providers/UserProvider';
 import { SmartNavButton } from '@/components/navigation/SmartNavButton';
@@ -23,6 +25,7 @@ export default function TopNavbar() {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useUser();
+  const startNav = useNavigationStore(s => s.start);
 
   return (
     <AppBar
@@ -87,6 +90,14 @@ export default function TopNavbar() {
           component={Link}
           href="/profile"
           aria-label="打开个人资料"
+          onClick={
+            (e => {
+              // 仅左键且无修饰键时触发，并避免重复导航
+              if (pathname === '/profile') return;
+              if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+              startNav();
+            }) as MouseEventHandler<HTMLAnchorElement>
+          }
           onMouseEnter={() => {
             // 悬停时预加载个人资料页
             if (pathname !== '/profile') {
