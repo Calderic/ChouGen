@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { handleApiError, ApiErrors } from '@/lib/api/error-handler';
+import { getChinaTodayStart } from '@/lib/utils/timezone';
 
 /**
  * @api GET /api/leaderboard/user/:id
@@ -39,14 +40,11 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     }
 
     // 今日数量
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     const { data: todayRecords } = await supabase
       .from('smoking_records')
       .select('id')
       .eq('user_id', userId)
-      .gte('smoked_at', today.toISOString());
+      .gte('smoked_at', getChinaTodayStart());
 
     const todaySmokes = todayRecords?.length || 0;
 

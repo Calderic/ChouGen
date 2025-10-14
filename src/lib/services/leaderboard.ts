@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
 import type { LeaderboardEntry } from '@/types/database';
+import { getChinaTodayStart, getChinaWeekStart, getChinaMonthStart } from '@/lib/utils/timezone';
 
 /**
  * 时间周期类型
@@ -66,29 +67,17 @@ export async function getMyRanking(period: LeaderboardPeriod = 'week'): Promise<
   // 用户不在排行榜上，手动计算该时间段的统计
   // 计算时间范围
   let startTime: string;
-  const now = new Date();
 
   switch (period) {
-    case 'day': {
-      const dayStart = new Date(now);
-      dayStart.setHours(0, 0, 0, 0);
-      startTime = dayStart.toISOString();
+    case 'day':
+      startTime = getChinaTodayStart();
       break;
-    }
-    case 'week': {
-      const weekStart = new Date(now);
-      const day = weekStart.getDay();
-      const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1); // 周一
-      weekStart.setDate(diff);
-      weekStart.setHours(0, 0, 0, 0);
-      startTime = weekStart.toISOString();
+    case 'week':
+      startTime = getChinaWeekStart();
       break;
-    }
-    case 'month': {
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      startTime = monthStart.toISOString();
+    case 'month':
+      startTime = getChinaMonthStart();
       break;
-    }
     default:
       startTime = '1970-01-01T00:00:00Z';
   }
@@ -153,14 +142,11 @@ export async function getUserDetail(userId: string): Promise<UserDetail | null> 
   }
 
   // 获取今日抽烟数量
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
   const { data: todayRecords, error: todayError } = await supabase
     .from('smoking_records')
     .select('id')
     .eq('user_id', userId)
-    .gte('smoked_at', today.toISOString());
+    .gte('smoked_at', getChinaTodayStart());
 
   const todaySmokes = todayError ? 0 : todayRecords?.length || 0;
 

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import type { Profile, LeaderboardEntry } from '@/types/database';
+import { getChinaTodayStart, getChinaWeekStart, getChinaMonthStart } from '@/lib/utils/timezone';
 
 /**
  * 排行榜页面数据获取（服务端）
@@ -37,29 +38,17 @@ export async function getLeaderboardPageData(period: 'day' | 'week' | 'month' | 
   } else {
     // 用户不在排行榜上，计算该时间段的统计
     let startTime: string;
-    const now = new Date();
 
     switch (period) {
-      case 'day': {
-        const dayStart = new Date(now);
-        dayStart.setHours(0, 0, 0, 0);
-        startTime = dayStart.toISOString();
+      case 'day':
+        startTime = getChinaTodayStart();
         break;
-      }
-      case 'week': {
-        const weekStart = new Date(now);
-        const day = weekStart.getDay();
-        const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
-        weekStart.setDate(diff);
-        weekStart.setHours(0, 0, 0, 0);
-        startTime = weekStart.toISOString();
+      case 'week':
+        startTime = getChinaWeekStart();
         break;
-      }
-      case 'month': {
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        startTime = monthStart.toISOString();
+      case 'month':
+        startTime = getChinaMonthStart();
         break;
-      }
       default:
         startTime = '1970-01-01T00:00:00Z';
     }

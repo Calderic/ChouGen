@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import type { Profile, CigarettePack } from '@/types/database';
 import type { SmokingRecordWithPack } from '@/lib/services/smoking-records';
+import { getChinaTodayStart } from '@/lib/utils/timezone';
 
 /**
  * 首页数据获取（服务端）
@@ -45,7 +46,7 @@ export const getHomePageData = cache(async () => {
       `
       )
       .eq('user_id', user.id)
-      .gte('smoked_at', new Date().toISOString().split('T')[0])
+      .gte('smoked_at', getChinaTodayStart())
       .order('smoked_at', { ascending: false }),
 
     // 统计数据
