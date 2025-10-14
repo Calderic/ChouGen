@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
 import type { SmokingRecord } from '@/types/database';
+import { getChinaTodayStart, getChinaDaysAgo, nowInChina } from '@/lib/utils/timezone';
 
 /**
  * 扩展的抽烟记录类型（包含香烟包信息）
@@ -57,7 +58,7 @@ export async function getSmokingRecords(
 }
 
 /**
- * 获取今天的抽烟记录
+ * 获取今天的抽烟记录（基于中国时区）
  */
 export async function getTodayRecords(userId?: string): Promise<SmokingRecordWithPack[]> {
   const supabase = createClient();
@@ -75,9 +76,8 @@ export async function getTodayRecords(userId?: string): Promise<SmokingRecordWit
     targetUserId = user.id;
   }
 
-  // 获取今天的开始时间（00:00:00）
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // 获取中国时区今天的开始时间（00:00:00）
+  const todayStart = getChinaTodayStart();
 
   const { data, error } = await supabase
     .from('smoking_records')
@@ -91,7 +91,7 @@ export async function getTodayRecords(userId?: string): Promise<SmokingRecordWit
     `
     )
     .eq('user_id', targetUserId)
-    .gte('smoked_at', today.toISOString())
+    .gte('smoked_at', todayStart)
     .order('smoked_at', { ascending: false });
 
   if (error) {
@@ -103,7 +103,7 @@ export async function getTodayRecords(userId?: string): Promise<SmokingRecordWit
 }
 
 /**
- * 创建抽烟记录
+ * 创建抽烟记录（使用中国时区）
  */
 export async function createSmokingRecord(
   packId: string,
@@ -138,14 +138,14 @@ export async function createSmokingRecord(
   // 计算单支成本 = 总价 / 总支数
   const costPerCigarette = pack.price / pack.total_count;
 
-  // 创建抽烟记录
+  // 创建抽烟记录（使用中国时区的当前时间）
   // 注意：数据库触发器 decrease_pack_count() 会自动减少香烟包数量，无需手动调用
   const { data, error } = await supabase
     .from('smoking_records')
     .insert({
       user_id: user.id,
       pack_id: packId,
-      smoked_at: (smokedAt || new Date()).toISOString(),
+      smoked_at: (smokedAt || nowInChina()).toISOString(),
       cost: costPerCigarette,
     })
     .select()
@@ -199,7 +199,7 @@ export async function deleteSmokingRecord(
       .from('cigarette_packs')
       .update({
         remaining_count: pack.remaining_count + 1,
-        updated_at: new Date().toISOString(),
+        updated_at: nowInChina().toISOString(),
       })
       .eq('id', record.pack_id);
   }
@@ -208,7 +208,7 @@ export async function deleteSmokingRecord(
 }
 
 /**
- * 获取用户统计数据（今日、本周、本月）
+ * 获取用户统计数据（今日、本周、本月，基于中国时区）
  */
 export async function getUserStats(userId?: string): Promise<{
   today: { count: number; cost: number };
@@ -234,23 +234,17 @@ export async function getUserStats(userId?: string): Promise<{
     targetUserId = user.id;
   }
 
-  // 计算时间范围
-  const now = new Date();
-  const todayStart = new Date(now);
-  todayStart.setHours(0, 0, 0, 0);
-
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - 7);
-
-  const monthStart = new Date(now);
-  monthStart.setMonth(now.getMonth() - 1);
+  // 计算时间范围（基于中国时区）
+  const todayStart = getChinaTodayStart();
+  const weekStart = getChinaDaysAgo(7);
+  const monthStart = getChinaDaysAgo(30);
 
   // 获取所有记录
   const { data, error } = await supabase
     .from('smoking_records')
     .select('smoked_at, cost')
     .eq('user_id', targetUserId)
-    .gte('smoked_at', monthStart.toISOString());
+    .gte('smoked_at', monthStart);
 
   if (error) {
     console.error('获取统计数据失败:', error);
@@ -263,9 +257,9 @@ export async function getUserStats(userId?: string): Promise<{
 
   const records = data || [];
 
-  // 计算统计数据
-  const todayRecords = records.filter(r => new Date(r.smoked_at) >= todayStart);
-  const weekRecords = records.filter(r => new Date(r.smoked_at) >= weekStart);
+  // 计算统计数据（对比 UTC 时间）
+  const todayRecords = records.filter(r => r.smoked_at >= todayStart);
+  const weekRecords = records.filter(r => r.smoked_at >= weekStart);
   const monthRecords = records;
 
   return {

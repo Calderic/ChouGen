@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/api/auth';
 import { handleApiError, ApiErrors } from '@/lib/api/error-handler';
+import { nowInChina } from '@/lib/utils/timezone';
 
 /**
  * @api POST /api/smoking-records
@@ -43,7 +44,8 @@ export async function POST(req: Request) {
     }
 
     const costPerCigarette = pack.price / pack.total_count;
-    const smokedISO = smokedAt ? new Date(smokedAt).toISOString() : new Date().toISOString();
+    // 使用中国时区的当前时间
+    const smokedISO = smokedAt ? new Date(smokedAt).toISOString() : nowInChina().toISOString();
 
     const { data, error } = await supabase
       .from('smoking_records')

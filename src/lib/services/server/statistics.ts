@@ -1,5 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
 import type { Profile, UserStats } from '@/types/database';
+import {
+  getChinaTodayStart,
+  getChinaDaysAgo,
+  getChinaDateString,
+  getChinaHour,
+  nowInChina,
+} from '@/lib/utils/timezone';
 
 /**
  * 统计页面数据获取（服务端）
@@ -22,7 +29,7 @@ export async function getStatisticsPageData() {
       .from('smoking_records')
       .select('smoked_at, cost')
       .eq('user_id', user.id)
-      .gte('smoked_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+      .gte('smoked_at', getChinaDaysAgo(30))
       .order('smoked_at', { ascending: true }),
 
     // 获取小时分布
@@ -55,52 +62,43 @@ export async function getStatisticsPageData() {
     };
   }
 
-  // 计算变化百分比（与上一周期比较）
-  const now = new Date();
-
-  // 昨天数据
-  const yesterdayStart = new Date(now);
-  yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-  yesterdayStart.setHours(0, 0, 0, 0);
-  const yesterdayEnd = new Date(yesterdayStart);
-  yesterdayEnd.setHours(23, 59, 59, 999);
+  // 计算变化百分比（与上一周期比较 - 基于中国时区）
+  // 昨天数据（中国时区）
+  const yesterdayStart = getChinaDaysAgo(1); // 昨天 00:00:00
+  const todayStart = getChinaTodayStart(); // 今天 00:00:00
 
   const { data: yesterdayData } = await supabase
     .from('smoking_records')
     .select('id')
     .eq('user_id', user.id)
-    .gte('smoked_at', yesterdayStart.toISOString())
-    .lte('smoked_at', yesterdayEnd.toISOString());
+    .gte('smoked_at', yesterdayStart)
+    .lt('smoked_at', todayStart);
 
   const yesterdayCount = yesterdayData?.length || 0;
 
-  // 上周数据
-  const lastWeekStart = new Date(now);
-  lastWeekStart.setDate(lastWeekStart.getDate() - 14);
-  const lastWeekEnd = new Date(now);
-  lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+  // 上周数据（7-13天前，中国时区）
+  const lastWeekStart = getChinaDaysAgo(14);
+  const lastWeekEnd = getChinaDaysAgo(7);
 
   const { data: lastWeekData } = await supabase
     .from('smoking_records')
     .select('id')
     .eq('user_id', user.id)
-    .gte('smoked_at', lastWeekStart.toISOString())
-    .lt('smoked_at', lastWeekEnd.toISOString());
+    .gte('smoked_at', lastWeekStart)
+    .lt('smoked_at', lastWeekEnd);
 
   const lastWeekCount = lastWeekData?.length || 0;
 
-  // 上月数据
-  const lastMonthStart = new Date(now);
-  lastMonthStart.setMonth(lastMonthStart.getMonth() - 2);
-  const lastMonthEnd = new Date(now);
-  lastMonthEnd.setMonth(lastMonthEnd.getMonth() - 1);
+  // 上月数据（30-59天前，中国时区）
+  const lastMonthStart = getChinaDaysAgo(60);
+  const lastMonthEnd = getChinaDaysAgo(30);
 
   const { data: lastMonthData } = await supabase
     .from('smoking_records')
     .select('id')
     .eq('user_id', user.id)
-    .gte('smoked_at', lastMonthStart.toISOString())
-    .lt('smoked_at', lastMonthEnd.toISOString());
+    .gte('smoked_at', lastMonthStart)
+    .lt('smoked_at', lastMonthEnd);
 
   const lastMonthCount = lastMonthData?.length || 0;
 
@@ -110,10 +108,11 @@ export async function getStatisticsPageData() {
     return Math.round(((current - previous) / previous) * 100);
   };
 
-  // 处理每日趋势数据
+  // 处理每日趋势数据（基于中国时区）
   const dailyMap = new Map<string, { smoke_count: number; total_cost: number }>();
   (trendResult.data || []).forEach((record: { smoked_at: string; cost: number }) => {
-    const date = new Date(record.smoked_at).toISOString().split('T')[0];
+    // 使用中国时区的日期进行分组
+    const date = getChinaDateString(record.smoked_at);
     const existing = dailyMap.get(date) || { smoke_count: 0, total_cost: 0 };
     dailyMap.set(date, {
       smoke_count: existing.smoke_count + 1,
@@ -128,10 +127,11 @@ export async function getStatisticsPageData() {
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  // 处理小时分布数据
+  // 处理小时分布数据（基于中国时区）
   const hourRangeMap = new Map<string, number>();
   (hourlyResult.data || []).forEach((record: { smoked_at: string }) => {
-    const hour = new Date(record.smoked_at).getHours();
+    // 使用中国时区的小时
+    const hour = getChinaHour(record.smoked_at);
     const rangeStart = Math.floor(hour / 2) * 2;
     const rangeEnd = rangeStart + 2;
     const rangeKey = `${rangeStart}-${rangeEnd}`;
@@ -148,13 +148,15 @@ export async function getStatisticsPageData() {
     };
   });
 
-  // 计算健康数据
-  const firstSmokeDate = rawStats.first_smoke_date
-    ? new Date(rawStats.first_smoke_date)
-    : new Date();
+  // 计算健康数据（基于中国时区）
+  const firstSmokeDateStr = rawStats.first_smoke_date || nowInChina().toISOString();
   const totalDays = Math.max(
     1,
-    Math.floor((Date.now() - firstSmokeDate.getTime()) / (1000 * 60 * 60 * 24))
+    Math.abs(
+      Math.floor(
+        (nowInChina().getTime() - new Date(firstSmokeDateStr).getTime()) / (1000 * 60 * 60 * 24)
+      )
+    )
   );
 
   const dailyAvg = rawStats.avg_daily_smokes;
