@@ -33,25 +33,39 @@ interface PackBasicInfoProps {
   records: SmokingRecord[];
 }
 
-export default function PackBasicInfo({
-  pack,
-  smokedCount,
-  records: _records,
-}: PackBasicInfoProps) {
+export default function PackBasicInfo({ pack, smokedCount, records }: PackBasicInfoProps) {
   const progress = (smokedCount / pack.total_count) * 100;
   const isFinished = pack.remaining_count === 0;
 
-  // 计算时间跨度
+  // 计算时间跨度：第一支烟到最后一支烟
   const purchaseDate = new Date(pack.purchase_date);
-  const finishDate = pack.finished_date ? new Date(pack.finished_date) : new Date();
+
+  // 获取实际的结束日期
+  let finishDate: Date;
+  let finishDateStr: string;
+
+  if (pack.finished_date) {
+    // 使用数据库中记录的 finished_date (最后一支烟的时间)
+    finishDate = new Date(pack.finished_date);
+    finishDateStr = format(finishDate, 'yyyy年MM月dd日', { locale: zhCN });
+  } else if (records.length > 0) {
+    // 如果没有 finished_date 但有记录，使用最后一条记录的时间
+    const lastRecord = records.reduce((latest, current) =>
+      new Date(current.smoked_at) > new Date(latest.smoked_at) ? current : latest
+    );
+    finishDate = new Date(lastRecord.smoked_at);
+    finishDateStr = '进行中';
+  } else {
+    // 如果没有任何记录，使用购买日期
+    finishDate = purchaseDate;
+    finishDateStr = '进行中';
+  }
+
   const daysSpan = differenceInDays(finishDate, purchaseDate);
   const hoursSpan = differenceInHours(finishDate, purchaseDate);
 
-  // 格式化日期
+  // 格式化购买日期
   const purchaseDateStr = format(purchaseDate, 'yyyy年MM月dd日', { locale: zhCN });
-  const finishDateStr = pack.finished_date
-    ? format(finishDate, 'yyyy年MM月dd日', { locale: zhCN })
-    : '进行中';
 
   return (
     <Card

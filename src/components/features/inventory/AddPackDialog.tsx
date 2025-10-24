@@ -20,6 +20,7 @@ import {
   SmokingRooms as SmokingIcon,
 } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
+import { getChinaDateString } from '@/lib/utils/timezone';
 
 interface Pack {
   id: string;
@@ -55,7 +56,7 @@ export default function AddPackDialog({
     brand: '',
     total_count: 20,
     price: 0,
-    purchase_date: new Date().toISOString().split('T')[0],
+    purchase_date: getChinaDateString(new Date()),
   });
 
   const [nameInput, setNameInput] = useState('');
@@ -93,7 +94,7 @@ export default function AddPackDialog({
       brand: '',
       total_count: 20,
       price: 0,
-      purchase_date: new Date().toISOString().split('T')[0],
+      purchase_date: getChinaDateString(new Date()),
     });
     setNameInput('');
     setShowRecommendation(false);
