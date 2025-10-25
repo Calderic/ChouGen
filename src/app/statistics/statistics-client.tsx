@@ -1,12 +1,14 @@
 'use client';
 
-import { Container, Box, Stack, Tabs, Tab, Skeleton } from '@mui/material';
-import { useState } from 'react';
+import { Container, Box, Stack, Tabs, Tab, Skeleton, Typography } from '@mui/material';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 import dynamic from 'next/dynamic';
 import StatsOverview from '@/components/features/statistics/StatsOverview';
-import type { Profile } from '@/types/database';
+import ViolationRecordList from '@/components/features/interval/ViolationRecordList';
+import { getViolations } from '@/lib/services/client/interval-control';
+import type { Profile, ViolationLog } from '@/types/database';
 
 // 动态导入图表组件（这些组件依赖 Recharts，体积较大）
 const TrendChart = dynamic(() => import('@/components/features/statistics/TrendChart'), {
@@ -64,11 +66,31 @@ interface StatisticsClientProps {
 }
 
 export function StatisticsClient({ initialData }: StatisticsClientProps) {
-  const [timePeriod, setTimePeriod] = useState<'week' | 'month'>('week');
+  const [timePeriod, setTimePeriod] = useState<'week' | 'month' | 'violations'>('week');
+  const [violations, setViolations] = useState<ViolationLog[]>([]);
+  const [loadingViolations, setLoadingViolations] = useState(false);
 
-  const handleTimePeriodChange = (_: React.SyntheticEvent, newValue: 'week' | 'month') => {
+  const handleTimePeriodChange = (
+    _: React.SyntheticEvent,
+    newValue: 'week' | 'month' | 'violations'
+  ) => {
     setTimePeriod(newValue);
   };
+
+  // 加载违规记录
+  useEffect(() => {
+    if (timePeriod === 'violations') {
+      const loadViolations = async () => {
+        setLoadingViolations(true);
+        const result = await getViolations(50);
+        if (result.success && result.data) {
+          setViolations(result.data);
+        }
+        setLoadingViolations(false);
+      };
+      loadViolations();
+    }
+  }, [timePeriod]);
 
   // 根据时间周期过滤数据
   const getFilteredChartData = () => {
@@ -97,13 +119,13 @@ export function StatisticsClient({ initialData }: StatisticsClientProps) {
         {/* 数据概览 */}
         <StatsOverview stats={initialData.stats} />
 
-        {/* 趋势图表 */}
+        {/* Tab 切换 */}
         <Box>
           <Tabs
             value={timePeriod}
             onChange={handleTimePeriodChange}
             sx={{
-              mb: 2,
+              mb: 3,
               '& .MuiTabs-indicator': {
                 bgcolor: 'primary.main',
                 height: 3,
@@ -131,15 +153,53 @@ export function StatisticsClient({ initialData }: StatisticsClientProps) {
                 },
               }}
             />
+            <Tab
+              label="违规记录"
+              value="violations"
+              sx={{
+                fontWeight: 600,
+                '&.Mui-selected': {
+                  color: 'error.main',
+                },
+              }}
+            />
           </Tabs>
-          <TrendChart data={chartData} period={timePeriod} />
+
+          {/* 趋势图表 (week/month) */}
+          {(timePeriod === 'week' || timePeriod === 'month') && (
+            <>
+              <TrendChart data={chartData} period={timePeriod} />
+
+              {/* 时段分布 */}
+              <Box sx={{ mt: 4 }}>
+                <HourlyDistribution data={initialData.hourlyData} />
+              </Box>
+
+              {/* 健康影响 */}
+              <Box sx={{ mt: 4 }}>
+                <HealthImpact data={initialData.healthData} />
+              </Box>
+            </>
+          )}
+
+          {/* 违规记录列表 */}
+          {timePeriod === 'violations' && (
+            <Box>
+              <Typography variant="h6" fontWeight={700} gutterBottom sx={{ mb: 3 }}>
+                违规记录
+              </Typography>
+              {loadingViolations ? (
+                <Box sx={{ py: 4 }}>
+                  <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 2, mb: 2 }} />
+                  <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 2, mb: 2 }} />
+                  <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 2 }} />
+                </Box>
+              ) : (
+                <ViolationRecordList violations={violations} />
+              )}
+            </Box>
+          )}
         </Box>
-
-        {/* 时段分布 */}
-        <HourlyDistribution data={initialData.hourlyData} />
-
-        {/* 健康影响 */}
-        <HealthImpact data={initialData.healthData} />
       </Stack>
     </Container>
   );

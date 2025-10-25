@@ -1,13 +1,16 @@
 'use client';
 
-import { Container, Stack } from '@mui/material';
-import { useState } from 'react';
+import { Container, Stack, Paper, Typography, Box, Button } from '@mui/material';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
+import { Lock as LockIcon } from '@mui/icons-material';
 import ProfileCard from '@/components/features/profile/ProfileCard';
 import Achievements from '@/components/features/profile/Achievements';
 import PrivacySettings from '@/components/features/profile/PrivacySettings';
 import { updateProfile, updatePrivacySettings } from '@/lib/services/client/profile';
+import { getViolations } from '@/lib/services/client/interval-control';
 import type { Profile, AchievementWithStatus } from '@/types/database';
 
 // 动态导入编辑对话框（只在用户点击编辑按钮时加载）
@@ -32,6 +35,10 @@ interface ProfileClientProps {
 export function ProfileClient({ initialData }: ProfileClientProps) {
   const router = useRouter();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [violationsSummary, setViolationsSummary] = useState({
+    total_count: 0,
+    last_violation_time: null as string | null,
+  });
 
   const handleEditClick = () => {
     setEditDialogOpen(true);
@@ -69,6 +76,17 @@ export function ProfileClient({ initialData }: ProfileClientProps) {
     }
   };
 
+  // 加载违规摘要
+  useEffect(() => {
+    const loadViolations = async () => {
+      const result = await getViolations(10);
+      if (result.success && result.summary) {
+        setViolationsSummary(result.summary);
+      }
+    };
+    loadViolations();
+  }, []);
+
   if (!initialData.profile) {
     return null;
   }
@@ -101,6 +119,59 @@ export function ProfileClient({ initialData }: ProfileClientProps) {
           }}
           onChange={handlePrivacyChange}
         />
+
+        {/* 违规摘要卡片 */}
+        {violationsSummary.total_count > 0 && (
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              bgcolor: 'rgba(255, 245, 245, 0.7)',
+              border: '2px solid',
+              borderColor: 'error.light',
+              borderRadius: 3,
+            }}
+          >
+            <Typography variant="h6" fontWeight={700} gutterBottom>
+              ⚠️ 违规记录
+            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box>
+                <Typography variant="body2" color="text.secondary">
+                  总违规次数：<strong>{violationsSummary.total_count}</strong> 次
+                </Typography>
+                {violationsSummary.last_violation_time && (
+                  <Typography variant="caption" color="text.secondary">
+                    最近违规：
+                    {format(new Date(violationsSummary.last_violation_time), 'yyyy-MM-dd HH:mm')}
+                  </Typography>
+                )}
+              </Box>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={() => router.push('/statistics?tab=violations')}
+              >
+                查看详情
+              </Button>
+            </Box>
+          </Paper>
+        )}
+
+        {/* 间隔控制入口 */}
+        <Button
+          fullWidth
+          variant="outlined"
+          startIcon={<LockIcon />}
+          onClick={() => router.push('/interval-control')}
+          sx={{
+            py: 1.5,
+            borderRadius: 2,
+            justifyContent: 'flex-start',
+          }}
+        >
+          间隔控制设置
+        </Button>
       </Stack>
 
       {/* 编辑资料弹窗 */}

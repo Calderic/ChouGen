@@ -10,7 +10,11 @@ import {
   IconButton,
   Paper,
 } from '@mui/material';
-import { Delete as DeleteIcon, SmokingRooms as SmokingIcon } from '@mui/icons-material';
+import {
+  Delete as DeleteIcon,
+  SmokingRooms as SmokingIcon,
+  Warning as WarningIcon,
+} from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePageTransition } from '@/components/layout/PageTransitionContext';
 import { formatDistanceToNow } from 'date-fns';
@@ -20,6 +24,8 @@ interface SmokingRecord {
   id: string;
   smoked_at: string;
   cost: number;
+  is_violation: boolean;
+  violation_type: string | null;
   pack: {
     name: string;
     brand: string | null;
@@ -105,9 +111,12 @@ export default function RecentRecords({ records, onDelete }: RecentRecordsProps)
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ delay: suppressInitialMotion ? 0 : index * 0.05 }}
                 sx={{
-                  bgcolor: 'rgba(255, 255, 255, 0.6)',
+                  bgcolor: record.is_violation
+                    ? 'rgba(255, 245, 245, 0.8)'
+                    : 'rgba(255, 255, 255, 0.6)',
                   backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  border: record.is_violation ? '2px solid' : '1px solid rgba(255, 255, 255, 0.3)',
+                  borderColor: record.is_violation ? 'error.light' : undefined,
                   boxShadow: '0 2px 12px rgba(0, 0, 0, 0.04)',
                   mb: 1.5,
                   borderRadius: 2.5,
@@ -156,10 +165,28 @@ export default function RecentRecords({ records, onDelete }: RecentRecordsProps)
                   </Box>
                   <ListItemText
                     primary={
-                      <Typography variant="body2" fontWeight="600">
-                        {record.pack.brand && `${record.pack.brand} · `}
-                        {record.pack.name}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2" fontWeight="600">
+                          {record.pack.brand && `${record.pack.brand} · `}
+                          {record.pack.name}
+                        </Typography>
+                        {record.is_violation && (
+                          <Chip
+                            label="违规"
+                            size="small"
+                            color="error"
+                            icon={<WarningIcon />}
+                            sx={{
+                              height: 20,
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              '& .MuiChip-icon': {
+                                fontSize: '0.85rem',
+                              },
+                            }}
+                          />
+                        )}
+                      </Box>
                     }
                     secondary={
                       <Typography

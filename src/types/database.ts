@@ -14,6 +14,8 @@ export interface Profile {
   privacy_show_in_leaderboard: boolean;
   privacy_allow_view_packs: boolean;
   privacy_allow_encouragements: boolean;
+  smoke_interval_enabled: boolean;
+  smoke_interval_minutes: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -39,6 +41,8 @@ export interface SmokingRecord {
   pack_id: string;
   smoked_at: string;
   cost: number;
+  is_violation: boolean;
+  violation_type: string | null;
   created_at: string;
 }
 
@@ -102,3 +106,37 @@ export interface AchievementWithStatus extends Achievement {
   unlocked_at: string | null;
   progress: number;
 }
+
+// 间隔控制相关类型
+export interface ViolationLog {
+  id: string;
+  user_id: string;
+  smoking_record_id: string;
+  violation_type: string;
+  expected_unlock_time: string;
+  actual_smoke_time: string;
+  interval_minutes: number;
+  created_at: string;
+}
+
+export interface LockStatus {
+  is_locked: boolean;
+  last_smoke_time: string | null;
+  unlock_time: string | null;
+  remaining_minutes: number;
+}
+
+export interface IntervalSettings {
+  enabled: boolean;
+  minutes: number | null;
+}
+
+// 间隔预设常量
+export const INTERVAL_PRESETS = [
+  { label: '15分钟', minutes: 15 },
+  { label: '30分钟', minutes: 30 },
+  { label: '45分钟', minutes: 45 },
+  { label: '1小时', minutes: 60 },
+  { label: '2小时', minutes: 120 },
+  { label: '3小时', minutes: 180 },
+] as const;
